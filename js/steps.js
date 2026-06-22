@@ -16,8 +16,8 @@ function renderSteps() {
     const result = JSON.parse(resultStr);
     const steps  = stepsStr ? JSON.parse(stepsStr) : null;
 
-    const xLabel = sessionStorage.getItem('kmeansXLabel') || 'Age';
-    const yLabel = sessionStorage.getItem('kmeansYLabel') || 'Income';
+    const xLabel = sessionStorage.getItem('kmeansXLabel') || 'Weekly_GenAI_Hours';
+    const yLabel = sessionStorage.getItem('kmeansYLabel') || 'Post_Semester_GPA';
 
     // Show stats
     document.getElementById('stepEmptyState').style.display = 'none';

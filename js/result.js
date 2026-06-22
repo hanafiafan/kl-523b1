@@ -25,8 +25,8 @@ function renderResults() {
     const finalCentroids = result.final_centroids;
     const finalAssignments = result.final_assignments;
 
-    const xLabel = sessionStorage.getItem('kmeansXLabel') || 'Age';
-    const yLabel = sessionStorage.getItem('kmeansYLabel') || 'Income';
+    const xLabel = sessionStorage.getItem('kmeansXLabel') || 'Weekly_GenAI_Hours';
+    const yLabel = sessionStorage.getItem('kmeansYLabel') || 'Post_Semester_GPA';
 
     // Set dynamic table headers
     const resX = document.getElementById('resultHeaderX');
@@ -123,33 +123,42 @@ function renderResults() {
 }
 
 function generateClusterLabels(centroids) {
-    const xLabel = sessionStorage.getItem('kmeansXLabel') || 'Age';
-    const yLabel = sessionStorage.getItem('kmeansYLabel') || 'Income';
+    const xLabel = sessionStorage.getItem('kmeansXLabel') || 'Weekly_GenAI_Hours';
+    const yLabel = sessionStorage.getItem('kmeansYLabel') || 'Post_Semester_GPA';
 
-    // Special Case: original customer database
-    if (xLabel === 'Age' && yLabel === 'Income') {
+    // Special Case: Student AI Impact dataset
+    if (xLabel === 'Weekly_GenAI_Hours' && yLabel === 'Post_Semester_GPA') {
         return centroids.map(c => {
-            const age = c[0];
-            const income = c[1];
+            const hours = c[0];
+            const gpa = c[1];
             
             let title = "";
             let desc = "";
 
-            if (income >= 100) {
-                title = "Premium Customer";
-                desc = "Income sangat tinggi. Targetkan produk eksklusif/VIP.";
-            } else if (income >= 50) {
-                title = "Standard Customer";
-                desc = "Income menengah. Targetkan program loyalitas harian.";
+            if (gpa >= 3.5) {
+                if (hours >= 15) {
+                    title = "Efficient AI Academic Adopters";
+                    desc = `GPA sangat tinggi (${gpa.toFixed(2)}) dengan penggunaan GenAI aktif (${hours.toFixed(1)} jam/minggu). Menggunakan AI secara produktif untuk mendukung prestasi akademik.`;
+                } else {
+                    title = "Traditional High Performers";
+                    desc = `GPA sangat tinggi (${gpa.toFixed(2)}) dengan penggunaan GenAI minim (${hours.toFixed(1)} jam/minggu). Mengandalkan metode belajar mandiri tradisional secara dominan.`;
+                }
+            } else if (gpa >= 2.75) {
+                if (hours >= 15) {
+                    title = "AI-Dependent Moderate Students";
+                    desc = `GPA menengah (${gpa.toFixed(2)}) dengan penggunaan GenAI tinggi (${hours.toFixed(1)} jam/minggu). Cukup bergantung pada AI untuk pengerjaan tugas kuliah sehari-hari.`;
+                } else {
+                    title = "Standard Traditional Students";
+                    desc = `GPA menengah (${gpa.toFixed(2)}) dengan penggunaan GenAI rendah (${hours.toFixed(1)} jam/minggu). Mengadopsi pola belajar standar dengan keterlibatan AI minimal.`;
+                }
             } else {
-                title = "Basic Customer";
-                desc = "Income rendah. Targetkan promo diskon & bundling.";
-            }
-
-            if (age < 30) {
-                title = "Young " + title;
-            } else if (age > 50) {
-                title = "Senior " + title;
+                if (hours >= 15) {
+                    title = "AI-Dependent Struggling Students";
+                    desc = `GPA rendah (${gpa.toFixed(2)}) dengan penggunaan GenAI sangat tinggi (${hours.toFixed(1)} jam/minggu). Mengindikasikan potensi ketergantungan berlebih atau penggunaan AI yang tidak efisien.`;
+                } else {
+                    title = "Underperforming Traditional Students";
+                    desc = `GPA rendah (${gpa.toFixed(2)}) dengan penggunaan GenAI rendah (${hours.toFixed(1)} jam/minggu). Membutuhkan pendampingan akademik tambahan tanpa pengaruh signifikan dari alat AI.`;
+                }
             }
 
             return { title, desc };
@@ -196,8 +205,8 @@ function downloadCSV() {
         return;
     }
 
-    const xLabel = sessionStorage.getItem('kmeansXLabel') || 'Age';
-    const yLabel = sessionStorage.getItem('kmeansYLabel') || 'Income';
+    const xLabel = sessionStorage.getItem('kmeansXLabel') || 'Weekly_GenAI_Hours';
+    const yLabel = sessionStorage.getItem('kmeansYLabel') || 'Post_Semester_GPA';
 
     let csvContent = "data:text/csv;charset=utf-8,";
     csvContent += `ID,Nama,${xLabel},${yLabel},Cluster,Label\r\n`;

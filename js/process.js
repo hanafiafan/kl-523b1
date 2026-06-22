@@ -11,8 +11,8 @@ function loadProcessData() {
     const kValue = sessionStorage.getItem('kmeansK') || '3';
     const resultStr = sessionStorage.getItem('kmeansResult');
 
-    const xLabel = sessionStorage.getItem('kmeansXLabel') || 'Age';
-    const yLabel = sessionStorage.getItem('kmeansYLabel') || 'Income';
+    const xLabel = sessionStorage.getItem('kmeansXLabel') || 'Weekly_GenAI_Hours';
+    const yLabel = sessionStorage.getItem('kmeansYLabel') || 'Post_Semester_GPA';
 
     const headerX = document.getElementById('headerProcessX');
     const headerY = document.getElementById('headerProcessY');

@@ -17,7 +17,7 @@ function renderVisualization() {
     if (!resultStr) return;
 
     const result = JSON.parse(resultStr);
-    const totalIter = result.iterations.length;
+    const totalIter = result.converged_at;
 
     document.getElementById('vizEmptyState').style.display = 'none';
     document.getElementById('iterSliderCard').style.display = 'block';
@@ -31,25 +31,55 @@ function renderVisualization() {
     drawScatter(result, totalIter);
 }
 
+function getDataPointsAndLabels() {
+    const dataStr = sessionStorage.getItem('kmeansData');
+    if (!dataStr) return { dataPoints: [], dataLabels: [] };
+    const data = JSON.parse(dataStr);
+    const dataPoints = data.map(d => [parseFloat(d.age), parseFloat(d.income)]);
+    const dataLabels = data.map(d => ({ nama: d.nama || d.id || '' }));
+    return { dataPoints, dataLabels };
+}
+
 function drawScatter(result, iterIdx) {
     const canvas = document.getElementById('scatterChart');
     const ctx = canvas.getContext('2d');
-    const dataPoints = result.data_points;
-    const dataLabels = result.data_labels;
+    
+    const { dataPoints, dataLabels } = getDataPointsAndLabels();
     const k = result.k;
 
-    const xLabel = sessionStorage.getItem('kmeansXLabel') || 'Age';
-    const yLabel = sessionStorage.getItem('kmeansYLabel') || 'Income';
+    const xLabel = sessionStorage.getItem('kmeansXLabel') || 'Weekly_GenAI_Hours';
+    const yLabel = sessionStorage.getItem('kmeansYLabel') || 'Post_Semester_GPA';
 
     let assignments, centroids;
 
     if (iterIdx === 0) {
         centroids = result.initial_centroids;
         assignments = new Array(dataPoints.length).fill(-1);
+    } else if (iterIdx === result.converged_at) {
+        centroids = result.final_centroids;
+        assignments = result.final_assignments;
     } else {
-        const iter = result.iterations[iterIdx - 1];
-        assignments = iter.assignments.map(a => a.assigned_cluster);
-        centroids = iter.new_centroids;
+        const stepsStr = sessionStorage.getItem('kmeansSteps');
+        if (stepsStr) {
+            const steps = JSON.parse(stepsStr);
+            const step = steps[iterIdx - 1];
+            centroids = step.centroids_after;
+        } else {
+            centroids = result.final_centroids;
+        }
+        
+        // Calculate assignments on the fly based on Euclidean distance
+        assignments = dataPoints.map(p => {
+            let minDist = Infinity;
+            let nearest = 0;
+            for (let j = 0; j < centroids.length; j++) {
+                const dx = p[0] - centroids[j][0];
+                const dy = p[1] - centroids[j][1];
+                const dist = Math.sqrt(dx*dx + dy*dy);
+                if (dist < minDist) { minDist = dist; nearest = j; }
+            }
+            return nearest;
+        });
     }
 
     const datasets = [];
@@ -110,7 +140,7 @@ function drawScatter(result, iterIdx) {
     const iterLabel = document.getElementById('scatterIterLabel');
     if (iterIdx === 0) {
         iterLabel.textContent = 'Sebelum Iterasi (Centroid Awal)';
-    } else if (iterIdx === result.iterations.length) {
+    } else if (iterIdx === result.converged_at) {
         iterLabel.textContent = `Iterasi ${iterIdx} — Final (Konvergen)`;
     } else {
         iterLabel.textContent = `Iterasi ${iterIdx}`;
@@ -180,7 +210,7 @@ window.showIteration = function(idx) {
 function updateIterLabel() {
     const resultStr = sessionStorage.getItem('kmeansResult');
     if (!resultStr) return;
-    const totalIter = JSON.parse(resultStr).iterations.length;
+    const totalIter = JSON.parse(resultStr).converged_at;
     const label = document.getElementById('iterLabel');
     if (currentIterIdx === 0) label.textContent = `Awal`;
     else label.textContent = `${currentIterIdx} / ${totalIter}`;
@@ -197,7 +227,7 @@ window.prevIteration = function() {
 window.nextIteration = function() {
     const resultStr = sessionStorage.getItem('kmeansResult');
     if (!resultStr) return;
-    const totalIter = JSON.parse(resultStr).iterations.length;
+    const totalIter = JSON.parse(resultStr).converged_at;
     if (currentIterIdx < totalIter) {
         currentIterIdx++;
         document.getElementById('iterSlider').value = currentIterIdx;
@@ -209,7 +239,7 @@ window.playAnimation = function() {
     const resultStr = sessionStorage.getItem('kmeansResult');
     if (!resultStr) return;
 
-    const totalIter = JSON.parse(resultStr).iterations.length;
+    const totalIter = JSON.parse(resultStr).converged_at;
     const btn = document.getElementById('btnPlayAnim');
     const slider = document.getElementById('iterSlider');
 

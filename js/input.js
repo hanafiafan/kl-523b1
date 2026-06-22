@@ -47,27 +47,27 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 function loadSampleData() {
-    // Reset custom labels to defaults
-    sessionStorage.removeItem('kmeansXLabel');
-    sessionStorage.removeItem('kmeansYLabel');
+    // Reset custom labels to defaults for new dataset
+    sessionStorage.setItem('kmeansXLabel', 'Weekly_GenAI_Hours');
+    sessionStorage.setItem('kmeansYLabel', 'Post_Semester_GPA');
     
     const sample = [
-        {"id": "1", "nama": "Andi", "age": 41, "income": 19},
-        {"id": "2", "nama": "Budi", "age": 47, "income": 100},
-        {"id": "3", "nama": "Citra", "age": 33, "income": 57},
-        {"id": "4", "nama": "Dewi", "age": 29, "income": 19},
-        {"id": "5", "nama": "Eko", "age": 47, "income": 253},
-        {"id": "6", "nama": "Fani", "age": 40, "income": 81},
-        {"id": "7", "nama": "Gina", "age": 38, "income": 56},
-        {"id": "8", "nama": "Hadi", "age": 42, "income": 64},
-        {"id": "9", "nama": "Irma", "age": 26, "income": 18},
-        {"id": "10", "nama": "Joko", "age": 47, "income": 115},
+        {"id": "100001", "nama": "Humanities", "age": 23.31, "income": 2.393},
+        {"id": "100002", "nama": "Medical", "age": 1.12, "income": 3.696},
+        {"id": "100003", "nama": "Business", "age": 21.26, "income": 3.499},
+        {"id": "100004", "nama": "Business", "age": 1.82, "income": 4.0},
+        {"id": "100005", "nama": "STEM", "age": 9.29, "income": 3.798},
+        {"id": "100006", "nama": "STEM", "age": 6.5, "income": 3.666},
+        {"id": "100007", "nama": "STEM", "age": 31.41, "income": 4.0},
+        {"id": "100008", "nama": "Arts", "age": 5.33, "income": 2.965},
+        {"id": "100009", "nama": "Business", "age": 2.0, "income": 3.396},
+        {"id": "100010", "nama": "Business", "age": 19.99, "income": 2.978}
     ];
     tableData = sample;
     currentPage = 1;
     saveData();
     renderTable();
-    showToast('Sample data berhasil dimuat (10 data)', 'success');
+    showToast('Sample data mahasiswa berhasil dimuat (10 data)', 'success');
 }
 
 function addRow() {
@@ -110,8 +110,8 @@ function renderTable() {
     const isLarge = tableData.length > rowsPerPage;
 
     // Update column headers based on sessionStorage values
-    const xLabel = sessionStorage.getItem('kmeansXLabel') || 'Age';
-    const yLabel = sessionStorage.getItem('kmeansYLabel') || 'Income';
+    const xLabel = sessionStorage.getItem('kmeansXLabel') || 'Weekly_GenAI_Hours';
+    const yLabel = sessionStorage.getItem('kmeansYLabel') || 'Post_Semester_GPA';
     document.getElementById('headerColX').textContent = xLabel;
     document.getElementById('headerColY').textContent = yLabel;
 
@@ -213,8 +213,8 @@ function updatePreview() {
     tbody.innerHTML = '';
 
     // Show only first 5 preview items for layout
-    const xLabel = sessionStorage.getItem('kmeansXLabel') || 'Age';
-    const yLabel = sessionStorage.getItem('kmeansYLabel') || 'Income';
+    const xLabel = sessionStorage.getItem('kmeansXLabel') || 'Weekly_GenAI_Hours';
+    const yLabel = sessionStorage.getItem('kmeansYLabel') || 'Post_Semester_GPA';
     
     const previewHeader = card.querySelector('thead tr');
     if (previewHeader) {
@@ -303,17 +303,17 @@ function uploadCSVFile(file) {
         
         // Check if standard headers (id, nama, age, income) exist directly and only 4 columns
         const headersLower = parsed.headers.map(h => h.trim().toLowerCase());
-        const hasId = headersLower.includes('id');
-        const hasName = headersLower.some(h => h === 'nama' || h === 'name');
-        const hasAge = headersLower.some(h => h === 'age' || h === 'umur');
-        const hasIncome = headersLower.some(h => h === 'income' || h === 'pendapatan');
+        const hasId = headersLower.includes('id') || headersLower.includes('student_id');
+        const hasName = headersLower.some(h => h === 'nama' || h === 'name' || h === 'major_category');
+        const hasAge = headersLower.some(h => h === 'age' || h === 'umur' || h === 'weekly_genai_hours');
+        const hasIncome = headersLower.some(h => h === 'income' || h === 'pendapatan' || h === 'post_semester_gpa');
         
         if (hasId && hasName && hasAge && hasIncome && parsed.headers.length === 4) {
             // Standard dataset! Import directly
-            const idIdx = headersLower.indexOf('id');
-            const nameIdx = headersLower.findIndex(h => h === 'nama' || h === 'name');
-            const ageIdx = headersLower.findIndex(h => h === 'age' || h === 'umur');
-            const incIdx = headersLower.findIndex(h => h === 'income' || h === 'pendapatan');
+            const idIdx = headersLower.findIndex(h => h === 'id' || h === 'student_id');
+            const nameIdx = headersLower.findIndex(h => h === 'nama' || h === 'name' || h === 'major_category');
+            const ageIdx = headersLower.findIndex(h => h === 'age' || h === 'umur' || h === 'weekly_genai_hours');
+            const incIdx = headersLower.findIndex(h => h === 'income' || h === 'pendapatan' || h === 'post_semester_gpa');
             
             const data = [];
             for (let i = 0; i < parsed.rows.length; i++) {

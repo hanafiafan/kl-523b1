@@ -61,23 +61,23 @@
                     <div class="concept-card">
                         <h4><i data-lucide="brain" width="20" height="20"></i> Apa itu K-Means Clustering?</h4>
                         <p><strong>K-Means</strong> adalah salah satu algoritma <em>unsupervised learning</em> yang paling populer dalam Data Mining. Algoritma ini digunakan untuk mengelompokkan data ke dalam <strong>K kelompok (cluster)</strong> berdasarkan kemiripan.</p>
-                        <p>Tujuannya adalah membuat data dalam satu cluster saling mirip (homogen), sementara data antar cluster berbeda (heterogen). Misalnya, kita bisa mengelompokkan pelanggan ke dalam segmen seperti: "Pelanggan Muda dengan Income Rendah", "Pelanggan Dewasa dengan Income Tinggi", dll.</p>
+                        <p>Tujuannya adalah membuat data dalam satu cluster saling mirip (homogen), sementara data antar cluster berbeda (heterogen). Misalnya, kita bisa mengelompokkan mahasiswa ke dalam segmen seperti: "Siswa dengan Penggunaan GenAI Tinggi tetapi GPA Rendah", "Siswa dengan Penggunaan GenAI Rendah dengan GPA Tinggi", dll.</p>
                     </div>
                     <div class="concept-card">
                         <h4><i data-lucide="crosshair" width="20" height="20"></i> Apa itu Centroid?</h4>
                         <p><strong>Centroid</strong> adalah titik pusat dari setiap cluster. Bayangkan centroid sebagai "perwakilan" atau "rata-rata" dari semua anggota cluster tersebut.</p>
-                        <p>Jika kita mengelompokkan pelanggan berdasarkan <code>Age</code> dan <code>Income</code>, maka centroid adalah titik <code>(rata-rata Age, rata-rata Income)</code> dari semua pelanggan dalam cluster tersebut.</p>
+                        <p>Jika kita mengelompokkan mahasiswa berdasarkan <code>Weekly_GenAI_Hours</code> dan <code>Post_Semester_GPA</code>, maka centroid adalah titik <code>(rata-rata Weekly_GenAI_Hours, rata-rata Post_Semester_GPA)</code> dari semua mahasiswa dalam cluster tersebut.</p>
                         <p>Pada awal algoritma, centroid dipilih secara acak dari data. Seiring iterasi berjalan, centroid akan berpindah ke posisi yang lebih optimal.</p>
                     </div>
                     <div class="concept-card">
                         <h4><i data-lucide="ruler" width="20" height="20"></i> Apa itu Euclidean Distance?</h4>
                         <p><strong>Euclidean Distance</strong> adalah cara mengukur jarak antara dua titik. Ini adalah jarak "garis lurus" yang biasa kita gunakan sehari-hari.</p>
                         <div class="formula-box">d = √( (x₁ - x₂)² + (y₁ - y₂)² )</div>
-                        <p><strong>Contoh:</strong> Jika pelanggan A memiliki Age=30 dan Income=50, sedangkan Centroid C1 memiliki Age=35 dan Income=60, maka:</p>
+                        <p><strong>Contoh:</strong> Jika siswa A memiliki Weekly_GenAI_Hours=10 dan Post_Semester_GPA=3.2, sedangkan Centroid C1 memiliki Weekly_GenAI_Hours=15 dan Post_Semester_GPA=3.5, maka:</p>
                         <div class="formula-box" style="text-align: left; font-size: 0.88rem;">
-                            d = √( (30-35)² + (50-60)² )<br>d = √( (-5)² + (-10)² )<br>d = √( 25 + 100 )<br>d = √125<br>d = 11.18
+                            d = √( (10-15)² + (3.2-3.5)² )<br>d = √( (-5)² + (-0.3)² )<br>d = √( 25 + 0.09 )<br>d = √25.09<br>d = 5.01
                         </div>
-                        <p>Jarak ini digunakan untuk menentukan pelanggan lebih dekat ke cluster mana. Pelanggan akan masuk ke cluster dengan centroid terdekat (jarak terkecil).</p>
+                        <p>Jarak ini digunakan untuk menentukan siswa lebih dekat ke cluster mana. Siswa akan masuk ke cluster dengan centroid terdekat (jarak terkecil).</p>
                     </div>
                     <div class="concept-card">
                         <h4><i data-lucide="repeat" width="20" height="20"></i> Mengapa Iterasi Dibutuhkan?</h4>

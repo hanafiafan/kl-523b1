@@ -21,8 +21,8 @@ let yLabel = 'Y';
 function initSimulator() {
     const dataStr = sessionStorage.getItem('kmeansData');
 
-    xLabel = sessionStorage.getItem('kmeansXLabel') || 'Variabel X';
-    yLabel = sessionStorage.getItem('kmeansYLabel') || 'Variabel Y';
+    xLabel = sessionStorage.getItem('kmeansXLabel') || 'Weekly_GenAI_Hours';
+    yLabel = sessionStorage.getItem('kmeansYLabel') || 'Post_Semester_GPA';
 
     // Update labels
     document.getElementById('labelInputX').textContent = `${xLabel} (Independen X)`;

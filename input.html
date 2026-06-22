@@ -60,8 +60,8 @@
                     <span>/</span>
                     <span>Input Data</span>
                 </div>
-                <h2><i data-lucide="download" width="28" height="28" style="vertical-align: middle; margin-right: 8px;"></i> Input Data Pelanggan</h2>
-                <p>Masukkan data pelanggan secara manual, upload CSV, atau gunakan data sample</p>
+                <h2><i data-lucide="download" width="28" height="28" style="vertical-align: middle; margin-right: 8px;"></i> Input Data Mahasiswa / Siswa</h2>
+                <p>Masukkan data secara manual, upload CSV, atau gunakan data sample</p>
             </div>
 
             <!-- Action Buttons -->
@@ -115,8 +115,8 @@
                                     <th style="width:60px">#</th>
                                     <th style="width:100px" id="headerColId">ID</th>
                                     <th id="headerColName">Nama</th>
-                                    <th style="width:180px" id="headerColX">Age</th>
-                                    <th style="width:180px" id="headerColY">Income</th>
+                                    <th style="width:180px" id="headerColX">Weekly GenAI Hours</th>
+                                    <th style="width:180px" id="headerColY">Post Semester GPA</th>
                                     <th style="width:80px">Aksi</th>
                                 </tr>
                             </thead>
@@ -146,7 +146,7 @@
                     <input type="file" accept=".csv" id="csvFileInput" onchange="handleFileUpload(event)">
                     <i data-lucide="file-up" width="40" height="40"></i>
                     <p>Drag & drop file CSV di sini, atau <strong>klik untuk pilih file</strong></p>
-                    <div class="upload-hint">Format: ID, Nama, Age, Income — file .csv (atau file kustom lainnya)</div>
+                    <div class="upload-hint">Format: Student_ID, Major_Category, Weekly_GenAI_Hours, Post_Semester_GPA — file .csv (atau file kustom lainnya)</div>
                 </div>
             </div>
 
@@ -213,8 +213,8 @@
                                 <tr>
                                     <th>ID</th>
                                     <th>Nama</th>
-                                    <th>Age</th>
-                                    <th>Income</th>
+                                    <th>Weekly GenAI Hours</th>
+                                    <th>Post Semester GPA</th>
                                 </tr>
                             </thead>
                             <tbody id="previewTableBody"></tbody>

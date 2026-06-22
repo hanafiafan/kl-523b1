@@ -26,8 +26,8 @@ function initPredict() {
     const resultStr = sessionStorage.getItem('kmeansResult');
     const dataStr   = sessionStorage.getItem('kmeansData');
 
-    xLabel = sessionStorage.getItem('kmeansXLabel') || 'X';
-    yLabel = sessionStorage.getItem('kmeansYLabel') || 'Y';
+    xLabel = sessionStorage.getItem('kmeansXLabel') || 'Weekly_GenAI_Hours';
+    yLabel = sessionStorage.getItem('kmeansYLabel') || 'Post_Semester_GPA';
 
     // Update all dynamic labels in the page
     updateAllLabels();
@@ -494,6 +494,20 @@ function exportPredictCSV() {
 
 // ─── Cluster Label Builder ────────────────────────────────────────────────────
 function buildClusterLabels(centroids) {
+    if (xLabel === 'Weekly_GenAI_Hours' && yLabel === 'Post_Semester_GPA') {
+        return centroids.map(c => {
+            const hours = c[0];
+            const gpa = c[1];
+            if (gpa >= 3.5) {
+                return hours >= 15 ? "Efficient AI Academic Adopters" : "Traditional High Performers";
+            } else if (gpa >= 2.75) {
+                return hours >= 15 ? "AI-Dependent Moderate Students" : "Standard Traditional Students";
+            } else {
+                return hours >= 15 ? "AI-Dependent Struggling Students" : "Underperforming Traditional Students";
+            }
+        });
+    }
+
     const allX = centroids.map(c => c[0]);
     const allY = centroids.map(c => c[1]);
     const avgX = allX.reduce((a, b) => a + b, 0) / centroids.length;
