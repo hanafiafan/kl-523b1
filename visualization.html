@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Matrix — KL-523B1</title>
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="noise-bg"></div>
+    <div class="grid-bg"></div>
+    
+    <header class="top-nav">
+        <a href="index.html" class="brand">
+            <i data-lucide="hexagon" width="24" height="24"></i>
+            <span>KL-523B1</span>
+        </a>
+        <nav class="nav-links">
+
+            <a href="input.html" class="">Workspace</a>
+            <a href="process.html" class="">Engine</a>
+            <a href="steps.html" class="">Trace</a>
+            <a href="visualization.html" class="active">Matrix</a>
+            <a href="result.html" class="">Output</a>
+            <a href="simulator.html" class="">Simulator</a>
+            <a href="predict.html" class="">Predict</a>
+            <a href="education.html" class="">Docs</a>
+
+        </nav>
+    </header>
+
+    <div class="ticker-wrap">
+        <div class="ticker">
+            <span class="ticker-item">VISUALIZATION CORE: ACTIVE</span>
+            <span class="ticker-item">ENGINE ID: KL-523B1</span>
+            <span class="ticker-item">SCATTER PLOT: DYNAMIC MATRIX</span>
+            <span class="ticker-item">CHART RENDERER: CHART.JS</span>
+            <span class="ticker-item">ELBOW METHOD: INTEGRATED</span>
+            <span class="ticker-item">ITERATION ANIMATOR: READY</span>
+            <!-- Duplicate for infinite scrolling -->
+            <span class="ticker-item">VISUALIZATION CORE: ACTIVE</span>
+            <span class="ticker-item">ENGINE ID: KL-523B1</span>
+            <span class="ticker-item">SCATTER PLOT: DYNAMIC MATRIX</span>
+            <span class="ticker-item">CHART RENDERER: CHART.JS</span>
+            <span class="ticker-item">ELBOW METHOD: INTEGRATED</span>
+            <span class="ticker-item">ITERATION ANIMATOR: READY</span>
+        </div>
+    </div>
+
+    <main class="bento-container">
+
+            <div class="page-header">
+                <div class="page-breadcrumb"><i data-lucide="home" width="14" height="14"></i><span>/</span><span>Visualisasi</span></div>
+                <h2><i data-lucide="scatter-chart" width="28" height="28" style="vertical-align: middle; margin-right: 8px;"></i> Matriks Visualisasi Cluster</h2>
+                <p>Scatter plot <span id="vizDescX">Age</span> vs <span id="vizDescY">Income</span> dengan warna cluster dan titik centroid</p>
+            </div>
+            <div class="card mb-3" id="iterSliderCard" style="display:none">
+                <div class="card-header">
+                    <h3><i data-lucide="sliders" width="20" height="20"></i> Animasi Iterasi</h3>
+                    <div class="btn-group">
+                        <button class="btn btn-sm btn-secondary" onclick="prevIteration()" id="btnPrevIter"><i data-lucide="skip-back" width="14" height="14"></i></button>
+                        <button class="btn btn-sm btn-primary" onclick="playAnimation()" id="btnPlayAnim"><i data-lucide="play" width="14" height="14"></i> Play</button>
+                        <button class="btn btn-sm btn-secondary" onclick="nextIteration()" id="btnNextIter"><i data-lucide="skip-forward" width="14" height="14"></i></button>
+                    </div>
+                </div>
+                <div class="form-group" style="margin-bottom:0">
+                    <div class="flex items-center" style="gap:16px">
+                        <span class="text-muted" style="font-size:0.82rem; white-space:nowrap">Iterasi:</span>
+                        <input type="range" class="range-slider" min="0" value="0" id="iterSlider" oninput="showIteration(parseInt(this.value))">
+                        <span class="text-accent font-mono" style="min-width:60px; text-align:center" id="iterLabel">0 / 0</span>
+                    </div>
+                </div>
+            </div>
+            <div class="card mb-3" id="scatterCard">
+                <div class="card-header">
+                    <h3><i data-lucide="scatter-chart" width="20" height="20"></i> Scatter Plot — <span id="vizHeaderX">Age</span> vs <span id="vizHeaderY">Income</span></h3>
+                    <span class="text-muted" id="scatterIterLabel"></span>
+                </div>
+                <div class="chart-container"><canvas id="scatterChart"></canvas></div>
+                <div class="empty-state" id="vizEmptyState">
+                    <i data-lucide="scatter-chart" width="48" height="48"></i>
+                    <h3>Belum Ada Hasil</h3>
+                    <p>Jalankan algoritma K-Means terlebih dahulu</p>
+                    <a href="process.html" class="btn btn-primary mt-2"><i data-lucide="cpu" width="16" height="16"></i> Ke Proses K-Means</a>
+                </div>
+            </div>
+            <div class="card" id="elbowCard" style="display:none">
+                <div class="card-header">
+                    <h3><i data-lucide="trending-down" width="20" height="20"></i> Elbow Method — SSE vs K</h3>
+                </div>
+                <div class="chart-container"><canvas id="elbowChart"></canvas></div>
+                <div class="alert alert-info mt-2">
+                    <i data-lucide="info" width="18" height="18"></i> Pilih nilai K di mana grafik membentuk "siku" (penurunan SSE mulai melambat). Itu adalah jumlah cluster optimal.
+                </div>
+            </div>
+            </main>
+
+    <!-- Core JS -->
+    <script src="js/main.js"></script>
+    <script src="js/visualization.js"></script>
+    <script>lucide.createIcons();</script>
+</body>

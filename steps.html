@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trace — KL-523B1</title>
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="noise-bg"></div>
+    <div class="grid-bg"></div>
+    
+    <header class="top-nav">
+        <a href="index.html" class="brand">
+            <i data-lucide="hexagon" width="24" height="24"></i>
+            <span>KL-523B1</span>
+        </a>
+        <nav class="nav-links">
+
+            <a href="input.html" class="">Workspace</a>
+            <a href="process.html" class="">Engine</a>
+            <a href="steps.html" class="active">Trace</a>
+            <a href="visualization.html" class="">Matrix</a>
+            <a href="result.html" class="">Output</a>
+            <a href="simulator.html" class="">Simulator</a>
+            <a href="predict.html" class="">Predict</a>
+            <a href="education.html" class="">Docs</a>
+
+        </nav>
+    </header>
+
+    <div class="ticker-wrap">
+        <div class="ticker">
+            <span class="ticker-item">TRACE TYPE: ITERATIVE STEPS</span>
+            <span class="ticker-item">ENGINE ID: KL-523B1</span>
+            <span class="ticker-item">MIGRATION LOG: ACTIVE</span>
+            <span class="ticker-item">CONVERGENCE DELTA: RECORDED</span>
+            <span class="ticker-item">ALGORITHM: STEP-BY-STEP</span>
+            <!-- Duplicate for infinite scrolling -->
+            <span class="ticker-item">TRACE TYPE: ITERATIVE STEPS</span>
+            <span class="ticker-item">ENGINE ID: KL-523B1</span>
+            <span class="ticker-item">MIGRATION LOG: ACTIVE</span>
+            <span class="ticker-item">CONVERGENCE DELTA: RECORDED</span>
+            <span class="ticker-item">ALGORITHM: STEP-BY-STEP</span>
+        </div>
+    </div>
+
+    <main class="bento-container">
+
+            <div class="page-header">
+                <div class="page-breadcrumb"><i data-lucide="home" width="14" height="14"></i><span>/</span><span>Step-by-Step Analysis</span></div>
+                <h2><i data-lucide="file-terminal" width="28" height="28" style="vertical-align: middle; margin-right: 8px;"></i> Log Iterasi Step-by-Step</h2>
+                <p>Analisis detail setiap iterasi algoritma K-Means — centroid, perhitungan jarak, dan perubahan cluster</p>
+            </div>
+
+            <!-- Summary Stats -->
+            <div class="grid-3 stagger-children mb-3" id="stepStats">
+                <div class="stat-card">
+                    <div class="stat-card-icon blue"><i data-lucide="repeat" width="22" height="22"></i></div>
+                    <div class="stat-card-value" id="stepTotalIterations">—</div>
+                    <div class="stat-card-label">Total Iterasi</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-card-icon green"><i data-lucide="target" width="22" height="22"></i></div>
+                    <div class="stat-card-value" id="stepConvergedAt">—</div>
+                    <div class="stat-card-label">Konvergen di Iterasi</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-card-icon purple"><i data-lucide="layers" width="22" height="22"></i></div>
+                    <div class="stat-card-value" id="stepKValue">—</div>
+                    <div class="stat-card-label">Jumlah Cluster</div>
+                </div>
+            </div>
+
+            <!-- Initial Centroids -->
+            <div class="card mb-3" id="initialCentroidsCard" style="display:none">
+                <div class="card-header">
+                    <h3><i data-lucide="crosshair" width="20" height="20"></i> Centroid Awal (Inisialisasi)</h3>
+                </div>
+                <div class="data-table-wrapper">
+                    <table class="data-table" id="initialCentroidsTable">
+                        <thead><tr><th>Centroid</th><th id="initialHeaderX">Age</th><th id="initialHeaderY">Income</th></tr></thead>
+                        <tbody id="initialCentroidsBody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Iteration Accordion -->
+            <div class="iteration-accordion" id="iterationAccordion">
+                <div class="empty-state" id="stepEmptyState">
+                    <i data-lucide="list-ordered" width="48" height="48"></i>
+                    <h3>Belum Ada Hasil</h3>
+                    <p>Jalankan algoritma K-Means terlebih dahulu di halaman Proses K-Means</p>
+                    <a href="process.html" class="btn btn-primary mt-2">
+                        <i data-lucide="cpu" width="16" height="16"></i> Ke Proses K-Means
+                    </a>
+                </div>
+            </div>
+            </main>
+
+    <!-- Core JS -->
+    <script src="js/main.js"></script>
+    <script src="js/steps.js"></script>
+    <script>lucide.createIcons();</script>
+</body>

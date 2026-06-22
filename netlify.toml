@@ -1,0 +1,22 @@
+[build]
+  publish = "."
+
+# Halaman utama → index.html
+[[redirects]]
+  from = "/"
+  to = "/index.html"
+  status = 200
+
+# Semua route lain → file HTML yang sesuai
+[[redirects]]
+  from = "/*"
+  to = "/:splat"
+  status = 200
+
+# Header keamanan
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-XSS-Protection = "1; mode=block"
+    X-Content-Type-Options = "nosniff"

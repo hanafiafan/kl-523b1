@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Predict — KL-523B1</title>
+    <meta name="description" content="Prediksi cluster untuk data baru secara batch menggunakan model K-Means yang telah dilatih. Input manual atau upload CSV, export hasil ke CSV.">
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .predict-table-wrapper { max-height: 420px; overflow-y: auto; }
+        .result-cluster-dot {
+            display: inline-block; width: 10px; height: 10px;
+            border-radius: 50%; margin-right: 6px; vertical-align: middle;
+        }
+        .drop-active { border-color: var(--accent-primary) !important; background: rgba(59,130,246,0.08) !important; }
+        .stat-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border-color); font-size: 0.88rem; }
+        .stat-row:last-child { border-bottom: none; }
+        .step-badge {
+            display: inline-flex; align-items: center; justify-content: center;
+            width: 26px; height: 26px; border-radius: 50%;
+            background: rgba(59,130,246,0.15); border: 1px solid rgba(59,130,246,0.35);
+            font-size: 0.75rem; font-weight: 700; color: var(--accent-primary);
+            flex-shrink: 0;
+        }
+        .step-row { display: flex; gap: 12px; align-items: flex-start; margin-bottom: 16px; }
+        .step-content { flex: 1; }
+        .step-title { font-weight: 600; font-size: 0.92rem; margin-bottom: 3px; }
+        .step-desc { font-size: 0.82rem; color: var(--text-muted); line-height: 1.5; }
+        .chart-donut-wrap { display: flex; align-items: center; gap: 24px; }
+        .chart-legend-list { list-style: none; padding: 0; margin: 0; flex: 1; }
+        .chart-legend-list li { display: flex; align-items: center; gap: 8px; font-size: 0.85rem; margin-bottom: 8px; }
+        .legend-dot { width: 12px; height: 12px; border-radius: 3px; flex-shrink: 0; }
+    </style>
+</head>
+<body>
+    <div class="noise-bg"></div>
+    <div class="grid-bg"></div>
+
+    <header class="top-nav">
+        <a href="index.html" class="brand">
+            <i data-lucide="hexagon" width="24" height="24"></i>
+            <span>KL-523B1</span>
+        </a>
+        <nav class="nav-links">
+            <a href="input.html">Workspace</a>
+            <a href="process.html">Engine</a>
+            <a href="steps.html">Trace</a>
+            <a href="visualization.html">Matrix</a>
+            <a href="result.html">Output</a>
+            <a href="simulator.html">Simulator</a>
+            <a href="predict.html" class="active">Predict</a>
+            <a href="education.html">Docs</a>
+        </nav>
+    </header>
+
+    <div class="ticker-wrap">
+        <div class="ticker">
+            <span class="ticker-item">PREDICT ENGINE: READY</span>
+            <span class="ticker-item">MODE: BATCH PREDICTION</span>
+            <span class="ticker-item">INPUT: MANUAL / CSV UPLOAD</span>
+            <span class="ticker-item">ALGORITHM: NEAREST CENTROID (EUCLIDEAN)</span>
+            <span class="ticker-item">EXPORT: CSV DOWNLOAD</span>
+            <span class="ticker-item">PREDICT ENGINE: READY</span>
+            <span class="ticker-item">MODE: BATCH PREDICTION</span>
+            <span class="ticker-item">INPUT: MANUAL / CSV UPLOAD</span>
+            <span class="ticker-item">ALGORITHM: NEAREST CENTROID (EUCLIDEAN)</span>
+            <span class="ticker-item">EXPORT: CSV DOWNLOAD</span>
+        </div>
+    </div>
+
+    <main class="bento-container">
+
+        <div class="page-header">
+            <div class="page-breadcrumb">
+                <i data-lucide="flask-conical" width="14" height="14"></i>
+                <span>/</span>
+                <span>Batch Prediction</span>
+            </div>
+            <h2><i data-lucide="flask-conical" width="28" height="28" style="vertical-align:middle; margin-right:8px;"></i>Batch Cluster Prediction</h2>
+            <p>Masukkan data baru secara manual atau upload file CSV, lalu sistem akan memprediksi cluster untuk setiap baris menggunakan centroid model yang sudah dilatih — tanpa perlu menjalankan ulang K-Means.</p>
+        </div>
+
+        <!-- Model Info Bar -->
+        <div id="modelInfoBar" style="background:rgba(59,130,246,0.06); border:1px solid rgba(59,130,246,0.2); border-radius:8px; padding:10px 16px; display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:20px;">
+            <i data-lucide="cpu" width="16" height="16" style="color:var(--accent-primary); flex-shrink:0;"></i>
+            <span style="font-size:0.85rem; color:var(--text-secondary);">Model:</span>
+            <span id="mdlInfo" style="font-family:var(--font-mono); font-size:0.78rem; color:var(--accent-primary); background:rgba(59,130,246,0.1); padding:3px 8px; border-radius:4px;">Memuat...</span>
+            <span id="mdlXLabel" style="font-family:var(--font-mono); font-size:0.78rem; background:rgba(255,255,255,0.05); padding:3px 8px; border-radius:4px; color:var(--text-secondary);">X: —</span>
+            <span id="mdlYLabel" style="font-family:var(--font-mono); font-size:0.78rem; background:rgba(255,255,255,0.05); padding:3px 8px; border-radius:4px; color:var(--text-secondary);">Y: —</span>
+        </div>
+
+        <!-- Step Guide + Input Mode Toggle -->
+        <div class="grid-2" style="align-items:start;">
+
+            <!-- Step Guide Card -->
+            <div class="card">
+                <div class="card-header">
+                    <h3><i data-lucide="list-ordered" width="20" height="20"></i> Panduan</h3>
+                </div>
+                <div class="step-row mt-3">
+                    <span class="step-badge">1</span>
+                    <div class="step-content">
+                        <div class="step-title">Pilih Mode Input</div>
+                        <div class="step-desc">Tambah baris manual atau upload file CSV baru yang berisi kolom X dan Y.</div>
+                    </div>
+                </div>
+                <div class="step-row">
+                    <span class="step-badge">2</span>
+                    <div class="step-content">
+                        <div class="step-title">Isi Data</div>
+                        <div class="step-desc">Masukkan nilai X dan Y (opsional ID/Label) untuk tiap data yang ingin diprediksi.</div>
+                    </div>
+                </div>
+                <div class="step-row">
+                    <span class="step-badge">3</span>
+                    <div class="step-content">
+                        <div class="step-title">Jalankan Prediksi</div>
+                        <div class="step-desc">Klik "Prediksi Semua" — sistem mencari centroid terdekat untuk setiap baris data.</div>
+                    </div>
+                </div>
+                <div class="step-row">
+                    <span class="step-badge">4</span>
+                    <div class="step-content">
+                        <div class="step-title">Export Hasil</div>
+                        <div class="step-desc">Unduh tabel hasil prediksi beserta label cluster dalam format CSV.</div>
+                    </div>
+                </div>
+
+                <!-- Centroid reference mini-table -->
+                <div style="margin-top:8px; background:var(--bg-input); border-radius:6px; border:1px solid var(--border-color); overflow:hidden;">
+                    <div style="padding:9px 13px; font-size:0.75rem; text-transform:uppercase; letter-spacing:1px; color:var(--text-muted); border-bottom:1px solid var(--border-color);">Referensi Centroid Model</div>
+                    <table class="data-table" id="centroidRefTable" style="margin:0;">
+                        <thead><tr><th>Cluster</th><th id="cRefX">X</th><th id="cRefY">Y</th></tr></thead>
+                        <tbody id="centroidRefBody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Input Mode Card -->
+            <div class="card">
+                <div class="card-header">
+                    <h3><i data-lucide="database" width="20" height="20"></i> Input Data Baru</h3>
+                    <!-- Mode toggle buttons -->
+                    <div class="btn-group">
+                        <button class="btn btn-sm btn-primary" id="btnModeManual" onclick="setInputMode('manual')">
+                            <i data-lucide="pen-line" width="14" height="14"></i> Manual
+                        </button>
+                        <button class="btn btn-sm btn-secondary" id="btnModeCSV" onclick="setInputMode('csv')">
+                            <i data-lucide="file-up" width="14" height="14"></i> Upload CSV
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Manual Mode -->
+                <div id="manualModePanel" class="mt-3">
+                    <div class="grid-2" style="gap:10px; margin-bottom:10px;">
+                        <div class="form-group" style="margin:0;">
+                            <label class="form-label" id="newLabelId">ID / Label</label>
+                            <input type="text" id="newId" class="form-input" placeholder="Opsional...">
+                        </div>
+                        <div class="form-group" style="margin:0;">
+                            <label class="form-label" id="newLabelX">Nilai X</label>
+                            <input type="number" step="any" id="newX" class="form-input" placeholder="Wajib diisi">
+                        </div>
+                        <div class="form-group" style="margin:0; grid-column:1/-1;">
+                            <label class="form-label" id="newLabelY">Nilai Y (Opsional)</label>
+                            <input type="number" step="any" id="newY" class="form-input" placeholder="Kosongkan jika tidak ada">
+                        </div>
+                    </div>
+                    <div class="btn-group">
+                        <button class="btn btn-secondary" onclick="addPredictRow()">
+                            <i data-lucide="plus" width="15" height="15"></i> Tambah Baris
+                        </button>
+                        <button class="btn btn-ghost" onclick="clearPredictRows()" style="border:1px solid rgba(255,255,255,0.1);">
+                            <i data-lucide="trash-2" width="14" height="14"></i> Kosongkan
+                        </button>
+                    </div>
+                </div>
+
+                <!-- CSV Upload Mode -->
+                <div id="csvModePanel" class="mt-3" style="display:none;">
+                    <div class="upload-zone" id="predictUploadZone" style="padding:24px; text-align:center;">
+                        <input type="file" accept=".csv" id="predictCSVInput" onchange="handlePredictCSV(event)" style="position:absolute;width:1px;height:1px;opacity:0;">
+                        <i data-lucide="file-up" width="36" height="36" style="margin:0 auto 10px; display:block; color:var(--text-muted);"></i>
+                        <p style="font-size:0.9rem; margin-bottom:8px;">Drag & drop CSV di sini, atau <strong style="color:var(--accent-primary); cursor:pointer;" onclick="document.getElementById('predictCSVInput').click()">klik untuk pilih</strong></p>
+                        <div style="font-size:0.78rem; color:var(--text-muted);">Format: header baris pertama, kolom X dan Y minimal ada</div>
+                    </div>
+
+                    <!-- CSV column mapping (shown after upload) -->
+                    <div id="csvMapPanel" style="display:none; margin-top:14px;">
+                        <div style="font-size:0.82rem; color:var(--text-muted); margin-bottom:10px;">Petakan kolom CSV ke variabel model:</div>
+                        <div class="grid-2" style="gap:10px;">
+                            <div class="form-group" style="margin:0;">
+                                <label class="form-label">Kolom ID / Label</label>
+                                <select class="form-input" id="csvMapId"></select>
+                            </div>
+                            <div class="form-group" style="margin:0;">
+                                <label class="form-label" id="csvMapXLabel">Kolom X</label>
+                                <select class="form-input" id="csvMapX"></select>
+                            </div>
+                            <div class="form-group" style="margin:0; grid-column:1/-1;">
+                                <label class="form-label" id="csvMapYLabel">Kolom Y (Opsional)</label>
+                                <select class="form-input" id="csvMapY">
+                                    <option value="">— Tidak ada / Lewati —</option>
+                                </select>
+                            </div>
+                        </div>
+                        <button class="btn btn-primary mt-2" onclick="applyCsvMapping()">
+                            <i data-lucide="check" width="15" height="15"></i> Terapkan & Muat Data
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div><!-- /guide + input -->
+
+        <!-- Staging Table Card -->
+        <div class="card mt-3" id="stagingCard">
+            <div class="card-header">
+                <h3>
+                    <i data-lucide="table" width="20" height="20"></i>
+                    Data Antrian Prediksi
+                </h3>
+                <div class="btn-group">
+                    <span id="stagingCount" style="font-family:var(--font-mono); font-size:0.82rem; color:var(--text-muted);">0 baris</span>
+                    <button class="btn btn-success" id="btnRunPredict" onclick="runBatchPredict()" disabled>
+                        <i data-lucide="zap" width="15" height="15"></i>
+                        Prediksi Semua
+                    </button>
+                </div>
+            </div>
+            <div class="predict-table-wrapper">
+                <table class="data-table" id="stagingTable">
+                    <thead>
+                        <tr>
+                            <th style="width:40px;">#</th>
+                            <th>ID / Label</th>
+                            <th id="stagingHeaderX">X</th>
+                            <th id="stagingHeaderY">Y</th>
+                            <th style="width:50px;">Hapus</th>
+                        </tr>
+                    </thead>
+                    <tbody id="stagingBody"></tbody>
+                </table>
+            </div>
+            <div class="empty-state" id="stagingEmpty" style="padding:30px;">
+                <i data-lucide="inbox" width="40" height="40"></i>
+                <h3>Belum Ada Data</h3>
+                <p>Tambahkan baris secara manual atau upload CSV di atas</p>
+            </div>
+        </div>
+
+        <!-- Results Section (shown after prediction) -->
+        <div id="predictResultsSection" style="display:none;">
+
+            <div class="grid-2 mt-3">
+
+                <!-- Results Table Card -->
+                <div class="card" style="grid-column:1/-1; border-color:rgba(16,185,129,0.3);">
+                    <div class="card-header">
+                        <h3>
+                            <i data-lucide="check-circle" width="20" height="20" style="color:#10b981;"></i>
+                            Hasil Prediksi Batch
+                        </h3>
+                        <div class="btn-group">
+                            <span id="resultCount" class="cluster-badge" style="color:#10b981; border-color:rgba(16,185,129,0.3); background:rgba(16,185,129,0.08);">0 hasil</span>
+                            <button class="btn btn-sm btn-primary" onclick="exportPredictCSV()" id="btnExportPredict">
+                                <i data-lucide="download" width="14" height="14"></i> Export CSV
+                            </button>
+                        </div>
+                    </div>
+                    <div class="predict-table-wrapper">
+                        <table class="data-table" id="resultTable">
+                            <thead>
+                                <tr>
+                                    <th style="width:40px;">#</th>
+                                    <th>ID / Label</th>
+                                    <th id="resultHeaderX">X</th>
+                                    <th id="resultHeaderY">Y</th>
+                                    <th>Cluster</th>
+                                    <th>Label</th>
+                                    <th>Jarak (Euclidean)</th>
+                                </tr>
+                            </thead>
+                            <tbody id="resultBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Charts: Donut + Bar -->
+            <div class="grid-2 mt-3">
+
+                <!-- Donut distribution chart -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3><i data-lucide="pie-chart" width="20" height="20"></i> Distribusi Prediksi</h3>
+                    </div>
+                    <p style="font-size:0.82rem; color:var(--text-muted); margin-bottom:12px;">Sebaran data baru ke tiap cluster berdasarkan prediksi model.</p>
+                    <div class="chart-donut-wrap">
+                        <div style="width:200px; height:200px; flex-shrink:0; position:relative;">
+                            <canvas id="predictDonutChart"></canvas>
+                        </div>
+                        <ul class="chart-legend-list" id="predictLegendList"></ul>
+                    </div>
+                </div>
+
+                <!-- Distance bar chart -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3><i data-lucide="ruler" width="20" height="20"></i> Rata-rata Jarak ke Centroid</h3>
+                    </div>
+                    <p style="font-size:0.82rem; color:var(--text-muted); margin-bottom:12px;">Semakin kecil jarak rata-rata, semakin yakin model menempatkan data di cluster tersebut.</p>
+                    <div class="chart-container" style="position:relative; height:220px;">
+                        <canvas id="predictDistanceChart"></canvas>
+                    </div>
+                </div>
+
+            </div>
+
+        </div><!-- /results section -->
+
+    </main>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="spinner"></div>
+        <div class="loading-text" id="loadingText">Memproses...</div>
+    </div>
+
+    <script src="js/main.js"></script>
+    <script src="js/predict.js"></script>
+    <script>lucide.createIcons();</script>
+</body>
+</html>

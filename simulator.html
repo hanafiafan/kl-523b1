@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulator — KL-523B1</title>
+    <meta name="description" content="Simulator dampak AI terhadap performa siswa. Masukkan profil Anda untuk melihat prediksi berbasis dataset historis menggunakan K-Means dan Regresi Linear.">
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        /* ─── Pulsing Star Marker (CSS only, Chart.js draws it) ─── */
+        @keyframes simPulse {
+            0%   { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.6); }
+            70%  { box-shadow: 0 0 0 14px rgba(245, 158, 11, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0); }
+        }
+
+        /* Prediction value */
+        .prediction-value {
+            font-family: var(--font-mono);
+            font-size: 2.2rem;
+            font-weight: 700;
+            color: var(--accent-primary);
+            text-shadow: 0 0 12px rgba(59, 130, 246, 0.4);
+            margin: 6px 0 2px;
+            line-height: 1;
+        }
+
+        .cluster-result-badge {
+            display: inline-block;
+            padding: 6px 16px;
+            border-radius: var(--radius-full);
+            font-weight: 700;
+            font-size: 1.1rem;
+            margin-top: 6px;
+            transition: all 0.3s;
+        }
+
+        /* Model info bar */
+        .model-info-bar {
+            background: rgba(59, 130, 246, 0.06);
+            border: 1px solid rgba(59, 130, 246, 0.2);
+            border-radius: var(--radius-sm);
+            padding: 10px 16px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .model-info-bar .mono {
+            font-family: var(--font-mono);
+            font-size: 0.78rem;
+            color: var(--accent-primary);
+            background: rgba(59, 130, 246, 0.1);
+            padding: 3px 8px;
+            border-radius: 4px;
+        }
+
+        .stat-mini-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-top: 16px;
+        }
+
+        .stat-mini-card {
+            background: var(--bg-input);
+            padding: 14px;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border-color);
+        }
+
+        .stat-mini-label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-muted);
+            margin-bottom: 6px;
+        }
+
+        /* Recommendation box */
+        .rec-box {
+            margin-top: 16px;
+            background: rgba(16, 185, 129, 0.05);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+            padding: 14px 16px;
+            border-radius: var(--radius-sm);
+        }
+
+        .rec-box-title {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+            color: var(--accent-success, #10b981);
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="noise-bg"></div>
+    <div class="grid-bg"></div>
+
+    <header class="top-nav">
+        <a href="index.html" class="brand">
+            <i data-lucide="hexagon" width="24" height="24"></i>
+            <span>KL-523B1</span>
+        </a>
+        <nav class="nav-links">
+            <a href="input.html">Workspace</a>
+            <a href="process.html">Engine</a>
+            <a href="steps.html">Trace</a>
+            <a href="visualization.html">Matrix</a>
+            <a href="result.html">Output</a>
+            <a href="simulator.html" class="active">Simulator</a>
+            <a href="predict.html">Predict</a>
+            <a href="education.html">Docs</a>
+        </nav>
+    </header>
+
+    <div class="ticker-wrap">
+        <div class="ticker">
+            <span class="ticker-item">SIMULATOR: ONLINE</span>
+            <span class="ticker-item">PREDICTIVE MODEL: OLS REGRESSION</span>
+            <span class="ticker-item">CLUSTER ASSIGNMENT: EUCLIDEAN DISTANCE</span>
+            <span class="ticker-item">FEATURE INFLUENCE: PEARSON r</span>
+            <span class="ticker-item">VISUALIZATION: REAL-TIME UPDATE</span>
+            <span class="ticker-item">SIMULATOR: ONLINE</span>
+            <span class="ticker-item">PREDICTIVE MODEL: OLS REGRESSION</span>
+            <span class="ticker-item">CLUSTER ASSIGNMENT: EUCLIDEAN DISTANCE</span>
+            <span class="ticker-item">FEATURE INFLUENCE: PEARSON r</span>
+            <span class="ticker-item">VISUALIZATION: REAL-TIME UPDATE</span>
+        </div>
+    </div>
+
+    <main class="bento-container">
+
+        <div class="page-header">
+            <div class="page-breadcrumb">
+                <i data-lucide="cpu" width="14" height="14"></i>
+                <span>/</span>
+                <span>Simulator</span>
+            </div>
+            <h2><i data-lucide="bot" width="28" height="28" style="vertical-align:middle; margin-right:8px;"></i>Predictive Impact Simulator</h2>
+            <p>Masukkan profil pengguna untuk mensimulasikan dampak berdasarkan model yang dilatih pada dataset historis. Sistem memprediksi nilai Y menggunakan OLS Regression dan menempatkan profil di cluster terdekat.</p>
+        </div>
+
+        <!-- Model Info Bar -->
+        <div class="model-info-bar">
+            <i data-lucide="activity" width="16" height="16" style="color: var(--accent-primary); flex-shrink:0;"></i>
+            <span style="font-size: 0.85rem; color: var(--text-secondary);">Model aktif:</span>
+            <span class="mono" id="simModelInfo">Memuat model...</span>
+            <span style="margin-left: auto; font-size: 0.8rem;" id="simDataBadge" class="cluster-badge" style="font-size:0.8rem;">0 data</span>
+        </div>
+
+        <!-- Top Section: Input + Result -->
+        <div class="grid-2">
+
+            <!-- Input Form Card -->
+            <div class="card" style="border-color: rgba(59,130,246,0.4);">
+                <div class="card-header">
+                    <h3>
+                        <i data-lucide="sliders" width="20" height="20" style="color: var(--accent-primary);"></i>
+                        Parameter Input
+                    </h3>
+                    <span class="cluster-badge" style="color:var(--accent-primary); border-color:rgba(59,130,246,0.3); background:rgba(59,130,246,0.07);">Real-time</span>
+                </div>
+
+                <div class="form-group mt-3">
+                    <label class="form-label" id="labelInputX">Variabel X</label>
+                    <input type="number" step="any" id="inputX" class="form-input" placeholder="Masukkan nilai X...">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" id="labelInputY">Variabel Y — Opsional</label>
+                    <input type="number" step="any" id="inputY" class="form-input" placeholder="Biarkan kosong untuk prediksi otomatis...">
+                    <small style="color:var(--text-muted); font-size:0.78rem; margin-top:4px; display:block; line-height:1.5;">
+                        ℹ️ Jika kosong, nilai Y akan diprediksi otomatis menggunakan <strong>OLS Linear Regression</strong>.
+                    </small>
+                </div>
+
+                <div class="mt-3">
+                    <button class="btn btn-primary w-full" onclick="runSimulation()" id="btnSimulate">
+                        <i data-lucide="zap" width="18" height="18"></i>
+                        Simulasikan Dampak
+                    </button>
+                </div>
+            </div>
+
+            <!-- Prediction Result Card -->
+            <div class="card" id="resultCard" style="display:none; border-color: rgba(16,185,129,0.4);">
+                <div class="card-header">
+                    <h3>
+                        <i data-lucide="target" width="20" height="20" style="color: var(--accent-secondary);"></i>
+                        Hasil Simulasi
+                    </h3>
+                    <span class="cluster-badge" style="color: #10b981; border-color: rgba(16,185,129,0.3); background: rgba(16,185,129,0.07);">Prediksi Selesai</span>
+                </div>
+
+                <div class="stat-mini-grid">
+                    <!-- Predicted Y -->
+                    <div class="stat-mini-card">
+                        <div class="stat-mini-label" id="predictLabelY">Prediksi Y</div>
+                        <div class="prediction-value" id="predYValue">—</div>
+                        <div style="font-size:0.75rem; color:var(--text-muted);">via OLS Regression</div>
+                    </div>
+
+                    <!-- Cluster Assignment -->
+                    <div class="stat-mini-card">
+                        <div class="stat-mini-label">Cluster Assignment</div>
+                        <div>
+                            <span class="cluster-result-badge" id="predClusterBadge">—</span>
+                        </div>
+                        <div style="font-size:0.75rem; color:var(--text-muted); margin-top:6px;">
+                            Jarak: <span id="predDistance" style="font-family:var(--font-mono);">—</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recommendation -->
+                <div class="rec-box">
+                    <div class="rec-box-title">
+                        <i data-lucide="lightbulb" width="16" height="16"></i>
+                        Analisis Sistem
+                    </div>
+                    <p id="systemRecommendation" style="font-size:0.88rem; line-height:1.6; color:var(--text-secondary); margin:0;"></p>
+                </div>
+            </div>
+
+        </div><!-- /grid-2 -->
+
+        <!-- Bottom Section: Charts -->
+        <div class="grid-2 mt-3">
+
+            <!-- Scatter Plot -->
+            <div class="card">
+                <div class="card-header">
+                    <h3>
+                        <i data-lucide="scatter-chart" width="20" height="20"></i>
+                        Peta Posisi Simulasi
+                    </h3>
+                    <span style="font-size:0.78rem; color:var(--text-muted);">★ = posisi Anda</span>
+                </div>
+                <p style="font-size:0.82rem; color:var(--text-muted); margin-bottom:12px; line-height:1.5;">
+                    Titik <strong>★ bintang kuning</strong> menunjukkan posisi profil Anda di ruang data. Garis putus-putus adalah OLS Regression Line global. Tanda <strong>✕</strong> adalah centroid tiap cluster.
+                </p>
+                <div class="chart-container" style="position:relative; height:400px; width:100%;">
+                    <canvas id="simulatorScatterChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Feature Influence Diverging Bar Chart -->
+            <div class="card">
+                <div class="card-header">
+                    <h3>
+                        <i data-lucide="bar-chart-horizontal" width="20" height="20"></i>
+                        Bagan Pengaruh Fitur
+                    </h3>
+                    <span style="font-size:0.78rem; color:var(--text-muted);">Pearson r</span>
+                </div>
+                <p style="font-size:0.82rem; color:var(--text-muted); margin-bottom:12px; line-height:1.5;">
+                    Diverging bar chart menunjukkan korelasi Pearson <strong>r</strong> antara variabel X dan Y secara keseluruhan maupun per cluster. Nilai mendekat +1 = korelasi positif kuat, mendekati −1 = negatif kuat.
+                </p>
+                <div class="chart-container" style="position:relative; height:380px; width:100%;">
+                    <canvas id="influenceBarChart"></canvas>
+                </div>
+            </div>
+
+        </div><!-- /grid-2 -->
+
+    </main>
+
+    <!-- Core JS (defines CLUSTER_COLORS, CLUSTER_NAMES etc.) -->
+    <script src="js/main.js"></script>
+    <script src="js/simulator.js"></script>
+
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
+</html>
