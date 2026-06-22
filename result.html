@@ -96,6 +96,45 @@
                 </div>
             </div>
 
+            <!-- ─── CLUSTER ANALYTICS DASHBOARD ─────────────────────────────── -->
+            <div class="card mt-3" id="analyticsDashboardCard" style="display:none; border-color: rgba(6,182,212,0.4);">
+                <div class="card-header">
+                    <h3>
+                        <i data-lucide="bar-chart-3" width="20" height="20" style="color:#06b6d4"></i>
+                        Dashboard Insights Klaster Mahasiswa
+                    </h3>
+                </div>
+                <div class="grid-2" style="gap:24px; align-items:start;">
+                    <!-- Left: Major Category Distribution -->
+                    <div>
+                        <span class="form-label" style="margin-bottom:12px; color:white;">Distribusi Jurusan per Klaster (Major Category)</span>
+                        <div class="chart-container" style="position:relative; height:280px; width:100%;">
+                            <canvas id="majorDistChart"></canvas>
+                        </div>
+                    </div>
+                    <!-- Right: Average Study Hours vs GenAI Hours -->
+                    <div>
+                        <span class="form-label" style="margin-bottom:12px; color:white;">Perbandingan Jam Belajar Tradisional vs Jam GenAI (Rata-rata)</span>
+                        <div class="chart-container" style="position:relative; height:280px; width:100%;">
+                            <canvas id="averageHoursChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ─── SMART ACADEMIC RECOMMENDATIONS ──────────────────────────── -->
+            <div class="card mt-3" id="recommendationsCard" style="display:none; border-color: rgba(204,255,0,0.4);">
+                <div class="card-header">
+                    <h3>
+                        <i data-lucide="graduation-cap" width="20" height="20" style="color:var(--accent-primary)"></i>
+                        Rekomendasi Akademik Cerdas (Smart Recommendations)
+                    </h3>
+                </div>
+                <div class="grid-3" id="recommendationsContainer" style="gap:20px;">
+                    <!-- Recommendations cards will be populated dynamically -->
+                </div>
+            </div>
+
             <!-- ─── SILHOUETTE EVALUATION CARD ─────────────────────────────── -->
             <div class="card mt-3" id="silhouetteCard" style="display:none; border-color: rgba(139,92,246,0.4);">
                 <div class="card-header">

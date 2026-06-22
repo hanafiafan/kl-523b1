@@ -177,6 +177,15 @@
                         <select class="form-input" id="csvColY"></select>
                     </div>
                     <div class="form-group" style="grid-column: 1 / -1;">
+                        <label class="form-label">Pilih Fitur untuk Klasterisasi (Multivariat)</label>
+                        <div id="csvFeaturesContainer" style="display: flex; flex-wrap: wrap; gap: 16px; padding: 16px; background: var(--bg-input); border: 1px solid var(--border-color); border-radius: var(--radius-sm);">
+                            <span style="color: var(--text-muted); font-size: 0.85rem;">Unggah CSV terlebih dahulu untuk mendeteksi kolom fitur.</span>
+                        </div>
+                        <small style="color: var(--text-muted); font-size: 0.8rem; margin-top: 4px; display: block;">
+                            Centang semua kolom numerik yang ingin Anda masukkan ke perhitungan jarak K-Means.
+                        </small>
+                    </div>
+                    <div class="form-group" style="grid-column: 1 / -1;">
                         <label class="form-label">Batas Jumlah Baris Data (Untuk Performa)</label>
                         <select class="form-input" id="csvRowLimit">
                             <option value="1000">1.000 Baris (Sangat Cepat)</option>

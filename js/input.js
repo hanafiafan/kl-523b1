@@ -415,7 +415,7 @@ function showColumnConfig(headers, rows) {
     const numericCandidates = [];
     headers.forEach((h, idx) => {
         const lower = h.toLowerCase();
-        if (lower.includes('gpa') || lower.includes('hours') || lower.includes('age') || lower.includes('income') || lower.includes('score') || lower.includes('level') || lower.includes('dependency') || lower.includes('diversity') || lower.includes('anxiety')) {
+        if (lower.includes('gpa') || lower.includes('hours') || lower.includes('age') || lower.includes('income') || lower.includes('score') || lower.includes('level') || lower.includes('dependency') || lower.includes('diversity') || lower.includes('anxiety') || lower.includes('study')) {
             numericCandidates.push(idx);
         }
     });
@@ -426,6 +426,34 @@ function showColumnConfig(headers, rows) {
     } else {
         if (headers.length > 2) colX.selectedIndex = 2;
         if (headers.length > 3) colY.selectedIndex = 3;
+    }
+
+    // Populate features container with checkboxes
+    const featuresContainer = document.getElementById('csvFeaturesContainer');
+    if (featuresContainer) {
+        featuresContainer.innerHTML = '';
+        headers.forEach((header) => {
+            const label = document.createElement('label');
+            label.style.cssText = 'display: inline-flex; align-items: center; gap: 6px; font-family: var(--font-mono); font-size: 0.85rem; color: var(--text-primary); cursor: pointer;';
+            
+            const checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.value = header;
+            checkbox.name = 'kmeansFeatureCheck';
+            
+            // Check by default if it looks numeric
+            const lower = header.toLowerCase();
+            if (lower.includes('gpa') || lower.includes('hours') || lower.includes('age') || lower.includes('income') || lower.includes('score') || lower.includes('level') || lower.includes('dependency') || lower.includes('diversity') || lower.includes('anxiety') || lower.includes('study') || lower.includes('retention')) {
+                // Ignore columns that are clearly strings
+                if (!lower.includes('level') && !lower.includes('policy') && !lower.includes('subscription') && !lower.includes('case') && !lower.includes('category') && !lower.includes('study_of') && !lower.includes('year_of')) {
+                    checkbox.checked = true;
+                }
+            }
+            
+            label.appendChild(checkbox);
+            label.appendChild(document.createTextNode(header));
+            featuresContainer.appendChild(label);
+        });
     }
     
     const card = document.getElementById('columnConfigCard');
@@ -448,6 +476,12 @@ function applyCSVColumnConfig() {
     const nameIdx = tempCSVData.headers.indexOf(nameVal);
     const xIdx = tempCSVData.headers.indexOf(xValCol);
     const yIdx = tempCSVData.headers.indexOf(yValCol);
+
+    const checkedFeatures = Array.from(document.querySelectorAll('input[name="kmeansFeatureCheck"]:checked')).map(cb => cb.value);
+    if (checkedFeatures.length === 0) {
+        showToast("Pilih setidaknya satu fitur untuk klasterisasi!", "warning");
+        return;
+    }
     
     showLoading("Mengimpor data...");
     
@@ -470,12 +504,21 @@ function applyCSVColumnConfig() {
                 continue;
             }
             
-            data.push({
+            const record = {
                 id: row[idIdx] || String(i + 1),
                 nama: row[nameIdx] || `Data ${i + 1}`,
                 age: x,
                 income: y
+            };
+
+            // Store all columns in the object
+            tempCSVData.headers.forEach((header, idx) => {
+                const val = row[idx];
+                const parsedVal = parseFloat(val);
+                record[header] = isNaN(parsedVal) ? val : parsedVal;
             });
+            
+            data.push(record);
         }
         
         tableData = data;
@@ -483,6 +526,7 @@ function applyCSVColumnConfig() {
         
         sessionStorage.setItem('kmeansXLabel', xValCol);
         sessionStorage.setItem('kmeansYLabel', yValCol);
+        sessionStorage.setItem('kmeansFeatures', JSON.stringify(checkedFeatures));
         
         saveData();
         renderTable();

@@ -182,13 +182,55 @@ function runSimulation() {
         usedLinearRegression = true;
     }
 
-    // Find closest cluster
+    // Apply Scaling to input — use scaled centroids from kmeansResult for distance
+    let scaleX = x;
+    let scaleY = y;
+
+    // Get the SCALED centroids from kmeansResult for accurate distance calculation
+    const resultStr = sessionStorage.getItem('kmeansResult');
+    const result = resultStr ? JSON.parse(resultStr) : null;
+    const scaledCentroidsArray = result && result.final_centroids_scaled
+        ? result.final_centroids_scaled
+        : null;
+
+    // Determine feature indices
+    const featuresStr = sessionStorage.getItem('kmeansFeatures');
+    const features = featuresStr ? JSON.parse(featuresStr) : [xLabel, yLabel];
+    const xFeatIdx = Math.max(0, features.indexOf(xLabel));
+    const yFeatIdx = Math.max(features.indexOf(yLabel), features.length > 1 ? 1 : 0);
+
+    const scalingParamsStr = sessionStorage.getItem('scalingParams');
+    if (scalingParamsStr && scaledCentroidsArray) {
+        const params = JSON.parse(scalingParamsStr);
+        if (params && params.method !== 'none') {
+            if (params.method === 'minmax') {
+                const rangeX = params.max[xFeatIdx] - params.min[xFeatIdx];
+                const rangeY = params.max[yFeatIdx] - params.min[yFeatIdx];
+                scaleX = rangeX === 0 ? 0 : (x - params.min[xFeatIdx]) / rangeX;
+                scaleY = rangeY === 0 ? 0 : (y - params.min[yFeatIdx]) / rangeY;
+            } else if (params.method === 'zscore') {
+                scaleX = (x - params.mean[xFeatIdx]) / params.std[xFeatIdx];
+                scaleY = (y - params.mean[yFeatIdx]) / params.std[yFeatIdx];
+            }
+        }
+    }
+
+    // Find closest cluster based on (scaled) distance
     let minDistance = Infinity;
     let closestCluster = 0;
 
     clusterCentroids.forEach((centroid, idx) => {
         if (!centroid) return;
-        const dist = euclideanDistance(x, y, centroid.x, centroid.y);
+        let dist;
+        if (scaledCentroidsArray && scaledCentroidsArray[idx]) {
+            // Use scaled centroids and scaled input for distance
+            const cx = scaledCentroidsArray[idx][xFeatIdx];
+            const cy = scaledCentroidsArray[idx][yFeatIdx];
+            dist = euclideanDistance(scaleX, scaleY, cx, cy);
+        } else {
+            // Fallback: use raw centroids
+            dist = euclideanDistance(x, y, centroid.x, centroid.y);
+        }
         if (dist < minDistance) {
             minDistance = dist;
             closestCluster = idx;

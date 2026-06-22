@@ -19,6 +19,16 @@ function renderSteps() {
     const xLabel = sessionStorage.getItem('kmeansXLabel') || 'Weekly_GenAI_Hours';
     const yLabel = sessionStorage.getItem('kmeansYLabel') || 'Post_Semester_GPA';
 
+    const featuresStr = sessionStorage.getItem('kmeansFeatures');
+    let xIdx = 0, yIdx = 1;
+    if (featuresStr) {
+        const features = JSON.parse(featuresStr);
+        const xi = features.indexOf(xLabel);
+        const yi = features.indexOf(yLabel);
+        if (xi >= 0) xIdx = xi;
+        if (yi >= 0) yIdx = yi;
+    }
+
     // Show stats
     document.getElementById('stepEmptyState').style.display = 'none';
     document.getElementById('initialCentroidsCard').style.display = 'block';
@@ -37,11 +47,13 @@ function renderSteps() {
     const initialBody = document.getElementById('initialCentroidsBody');
     initialBody.innerHTML = '';
     result.initial_centroids.forEach((c, idx) => {
+        const valX = c[xIdx] !== undefined ? c[xIdx] : c[0];
+        const valY = c[yIdx] !== undefined ? c[yIdx] : c[1];
         initialBody.innerHTML += `
             <tr>
                 <td><span class="cluster-badge cluster-badge-${idx}">● Centroid ${idx + 1}</span></td>
-                <td>${c[0]}</td>
-                <td>${c[1]}</td>
+                <td>${Number(valX).toFixed(3)}</td>
+                <td>${Number(valY).toFixed(3)}</td>
             </tr>
         `;
     });
@@ -69,11 +81,15 @@ function renderSteps() {
                         <div class="iteration-section-title"><i data-lucide="crosshair" width="16" height="16"></i> Centroid Akhir</div>
                         <table class="data-table">
                             <thead><tr><th>Centroid</th><th>${xLabel}</th><th>${yLabel}</th></tr></thead>
-                            <tbody>${result.final_centroids.map((c, i) => `
+                            <tbody>${result.final_centroids.map((c, i) => {
+                                const valX = c[xIdx] !== undefined ? c[xIdx] : c[0];
+                                const valY = c[yIdx] !== undefined ? c[yIdx] : c[1];
+                                return `
                                 <tr>
                                     <td><span class="cluster-badge cluster-badge-${i}">● C${i+1}</span></td>
-                                    <td>${c[0]}</td><td>${c[1]}</td>
-                                </tr>`).join('')}
+                                    <td>${Number(valX).toFixed(3)}</td><td>${Number(valY).toFixed(3)}</td>
+                                </tr>`;
+                            }).join('')}
                             </tbody>
                         </table>
                     </div>
@@ -102,18 +118,23 @@ function renderSteps() {
         `;
         step.centroids_before.forEach((cBefore, idx) => {
             const cAfter = step.centroids_after[idx];
-            const moved  = (cBefore[0] !== cAfter[0] || cBefore[1] !== cAfter[1]);
-            const dx = (cAfter[0] - cBefore[0]).toFixed(3);
-            const dy = (cAfter[1] - cBefore[1]).toFixed(3);
+            const valXBefore = cBefore[xIdx] !== undefined ? cBefore[xIdx] : cBefore[0];
+            const valYBefore = cBefore[yIdx] !== undefined ? cBefore[yIdx] : cBefore[1];
+            const valXAfter = cAfter[xIdx] !== undefined ? cAfter[xIdx] : cAfter[0];
+            const valYAfter = cAfter[yIdx] !== undefined ? cAfter[yIdx] : cAfter[1];
+
+            const moved  = (valXBefore !== valXAfter || valYBefore !== valYAfter);
+            const dx = (valXAfter - valXBefore).toFixed(3);
+            const dy = (valYAfter - valYBefore).toFixed(3);
             const statusHtml = moved
                 ? `<span style="color:var(--accent-primary); font-size:0.8rem;">Bergerak (Δ${dx}, Δ${dy})</span>`
                 : `<span style="color:var(--text-muted); font-size:0.8rem;">Tetap (Konvergen)</span>`;
             centroidsHtml += `
                 <tr>
                     <td><span class="cluster-badge cluster-badge-${idx}">C${idx+1}</span></td>
-                    <td>${cBefore[0]}</td><td>${cBefore[1]}</td>
-                    <td style="color:var(--accent-secondary);">${cAfter[0]}</td>
-                    <td style="color:var(--accent-secondary);">${cAfter[1]}</td>
+                    <td>${Number(valXBefore).toFixed(3)}</td><td>${Number(valYBefore).toFixed(3)}</td>
+                    <td style="color:var(--accent-secondary);">${Number(valXAfter).toFixed(3)}</td>
+                    <td style="color:var(--accent-secondary);">${Number(valYAfter).toFixed(3)}</td>
                     <td>${statusHtml}</td>
                 </tr>
             `;

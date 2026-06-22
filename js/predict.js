@@ -98,13 +98,25 @@ function renderCentroidRef() {
     const tbody = document.getElementById('centroidRefBody');
     if (!tbody) return;
     tbody.innerHTML = '';
+
+    const featuresStr = sessionStorage.getItem('kmeansFeatures');
+    let xIdx = 0, yIdx = 1;
+    if (featuresStr) {
+        const features = JSON.parse(featuresStr);
+        const xi = features.indexOf(xLabel);
+        const yi = features.indexOf(yLabel);
+        if (xi >= 0) xIdx = xi;
+        if (yi >= 0) yIdx = yi;
+    }
+
     centroids.forEach((c, i) => {
-        const color = CLUSTER_COLORS[i % CLUSTER_COLORS.length];
+        const valX = c[xIdx] !== undefined ? c[xIdx] : c[0];
+        const valY = c[yIdx] !== undefined ? c[yIdx] : c[1];
         tbody.innerHTML += `
             <tr>
                 <td><span class="cluster-badge cluster-badge-${i}" style="font-size:0.78rem;">● ${CLUSTER_NAMES[i]}</span></td>
-                <td style="font-family:var(--font-mono); font-size:0.82rem;">${Number(c[0]).toFixed(3)}</td>
-                <td style="font-family:var(--font-mono); font-size:0.82rem;">${Number(c[1]).toFixed(3)}</td>
+                <td style="font-family:var(--font-mono); font-size:0.82rem;">${Number(valX).toFixed(3)}</td>
+                <td style="font-family:var(--font-mono); font-size:0.82rem;">${Number(valY).toFixed(3)}</td>
             </tr>
         `;
     });
@@ -342,11 +354,52 @@ function runBatchPredict() {
 }
 
 function findNearestCentroid(x, y) {
+    // Get features and figure out which indices correspond to X and Y
+    const featuresStr = sessionStorage.getItem('kmeansFeatures');
+    const features = featuresStr ? JSON.parse(featuresStr) : [xLabel, yLabel];
+    const xIdx = features.indexOf(xLabel);
+    const yIdx = features.indexOf(yLabel);
+    const xFeatIdx = xIdx >= 0 ? xIdx : 0;
+    const yFeatIdx = yIdx >= 0 ? yIdx : 1;
+
+    // Build a full-dimensional point (set non-X/Y dims to 0)
+    const inputPoint = new Array(features.length).fill(0);
+    inputPoint[xFeatIdx] = x;
+    inputPoint[yFeatIdx] = y !== null ? y : 0;
+
+    // Use SCALED centroids (already in scaled space from K-Means)
+    const resultStr = sessionStorage.getItem('kmeansResult');
+    const result = resultStr ? JSON.parse(resultStr) : null;
+    let scaledCentroids = result && result.final_centroids_scaled
+        ? result.final_centroids_scaled
+        : centroids; // fallback to unscaled if scaled not available
+
+    // Scale the input point using the same scaling params used during training
+    let scaledInput = [...inputPoint];
+    const scalingParamsStr = sessionStorage.getItem('scalingParams');
+    if (scalingParamsStr) {
+        const params = JSON.parse(scalingParamsStr);
+        if (params && params.method !== 'none') {
+            scaledInput = inputPoint.map((val, j) => {
+                if (params.method === 'minmax') {
+                    const range = params.max[j] - params.min[j];
+                    return range === 0 ? 0 : (val - params.min[j]) / range;
+                } else if (params.method === 'zscore') {
+                    return (val - params.mean[j]) / params.std[j];
+                }
+                return val;
+            });
+        }
+    }
+
+    // Find nearest centroid using Euclidean distance in scaled space
+    // Only compare on the X and Y dimensions (since we only have those from user input)
     let minDist = Infinity;
     let nearest = 0;
-    centroids.forEach((c, i) => {
-        // c is [cx, cy] from kmeansResult.final_centroids
-        const dist = Math.sqrt(Math.pow(x - c[0], 2) + Math.pow(y !== null ? y - c[1] : 0, 2));
+    scaledCentroids.forEach((c, i) => {
+        const dx = scaledInput[xFeatIdx] - c[xFeatIdx];
+        const dy = scaledInput[yFeatIdx] - c[yFeatIdx];
+        const dist = Math.sqrt(dx * dx + dy * dy);
         if (dist < minDist) { minDist = dist; nearest = i; }
     });
     return { cluster: nearest, distance: minDist };
@@ -494,10 +547,21 @@ function exportPredictCSV() {
 
 // ─── Cluster Label Builder ────────────────────────────────────────────────────
 function buildClusterLabels(centroids) {
+    // Determine correct indices for X and Y values in centroid arrays
+    const featuresStr = sessionStorage.getItem('kmeansFeatures');
+    let xIdx = 0, yIdx = 1;
+    if (featuresStr) {
+        const features = JSON.parse(featuresStr);
+        const xi = features.indexOf(xLabel);
+        const yi = features.indexOf(yLabel);
+        if (xi >= 0) xIdx = xi;
+        if (yi >= 0) yIdx = yi;
+    }
+
     if (xLabel === 'Weekly_GenAI_Hours' && yLabel === 'Post_Semester_GPA') {
         return centroids.map(c => {
-            const hours = c[0];
-            const gpa = c[1];
+            const hours = c[xIdx] !== undefined ? c[xIdx] : c[0];
+            const gpa = c[yIdx] !== undefined ? c[yIdx] : c[1];
             if (gpa >= 3.5) {
                 return hours >= 15 ? "Efficient AI Academic Adopters" : "Traditional High Performers";
             } else if (gpa >= 2.75) {
@@ -508,12 +572,14 @@ function buildClusterLabels(centroids) {
         });
     }
 
-    const allX = centroids.map(c => c[0]);
-    const allY = centroids.map(c => c[1]);
+    const allX = centroids.map(c => c[xIdx] !== undefined ? c[xIdx] : c[0]);
+    const allY = centroids.map(c => c[yIdx] !== undefined ? c[yIdx] : c[1]);
     const avgX = allX.reduce((a, b) => a + b, 0) / centroids.length;
     const avgY = allY.reduce((a, b) => a + b, 0) / centroids.length;
     return centroids.map(c => {
-        const xH = c[0] >= avgX, yH = c[1] >= avgY;
+        const xV = c[xIdx] !== undefined ? c[xIdx] : c[0];
+        const yV = c[yIdx] !== undefined ? c[yIdx] : c[1];
+        const xH = xV >= avgX, yH = yV >= avgY;
         if (xH && yH)   return `${xLabel} Tinggi & ${yLabel} Tinggi`;
         if (xH && !yH)  return `${xLabel} Tinggi & ${yLabel} Rendah`;
         if (!xH && yH)  return `${xLabel} Rendah & ${yLabel} Tinggi`;

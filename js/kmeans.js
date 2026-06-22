@@ -112,6 +112,7 @@ function kmeansAlgorithm(data, k, initialCentroids = null, maxIterations = 100) 
             iteration: iter,
             centroids_before: centroids.map(c => [...c]),
             centroids_after:  newCentroids.map(c => [...c]),
+            assignments: Array.from(assignments),
             changes_count: changes,
             cluster_sizes: clusterSizes,
             sse: Math.round(sse * 100) / 100

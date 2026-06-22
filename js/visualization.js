@@ -35,6 +35,8 @@ function getDataPointsAndLabels() {
     const dataStr = sessionStorage.getItem('kmeansData');
     if (!dataStr) return { dataPoints: [], dataLabels: [] };
     const data = JSON.parse(dataStr);
+    // Always use age for X-axis and income for Y-axis
+    // (these map to kmeansXLabel and kmeansYLabel respectively, as set by input.js)
     const dataPoints = data.map(d => [parseFloat(d.age), parseFloat(d.income)]);
     const dataLabels = data.map(d => ({ nama: d.nama || d.id || '' }));
     return { dataPoints, dataLabels };
@@ -64,22 +66,11 @@ function drawScatter(result, iterIdx) {
             const steps = JSON.parse(stepsStr);
             const step = steps[iterIdx - 1];
             centroids = step.centroids_after;
+            assignments = step.assignments || result.final_assignments;
         } else {
             centroids = result.final_centroids;
+            assignments = result.final_assignments;
         }
-        
-        // Calculate assignments on the fly based on Euclidean distance
-        assignments = dataPoints.map(p => {
-            let minDist = Infinity;
-            let nearest = 0;
-            for (let j = 0; j < centroids.length; j++) {
-                const dx = p[0] - centroids[j][0];
-                const dy = p[1] - centroids[j][1];
-                const dist = Math.sqrt(dx*dx + dy*dy);
-                if (dist < minDist) { minDist = dist; nearest = j; }
-            }
-            return nearest;
-        });
     }
 
     const datasets = [];
@@ -124,7 +115,20 @@ function drawScatter(result, iterIdx) {
         });
     }
 
-    const centroidPoints = centroids.map(c => ({ x: c[0], y: c[1] }));
+    const featuresStr = sessionStorage.getItem('kmeansFeatures');
+    let xIdx = 0, yIdx = 1;
+    if (featuresStr) {
+        const features = JSON.parse(featuresStr);
+        const xi = features.indexOf(xLabel);
+        const yi = features.indexOf(yLabel);
+        if (xi >= 0) xIdx = xi;
+        if (yi >= 0) yIdx = yi;
+    }
+
+    const centroidPoints = centroids.map(c => ({
+        x: c[xIdx] !== undefined ? c[xIdx] : c[0],
+        y: c[yIdx] !== undefined ? c[yIdx] : c[1]
+    }));
     datasets.push({
         label: 'Centroid',
         data: centroidPoints,
