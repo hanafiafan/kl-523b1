@@ -40,56 +40,68 @@ function loadProcessData() {
     if (headerX) headerX.textContent = xLabel;
     if (headerY) headerY.textContent = yLabel;
 
+    const tbody = document.getElementById('processDataBody');
+    const emptyState = document.getElementById('processEmptyState');
+
     if (dataStr) {
-        const data = JSON.parse(dataStr);
-        document.getElementById('statDataCount').textContent = data.length;
-        document.getElementById('statKValue').textContent = kValue;
-
-        const tbody = document.getElementById('processDataBody');
-        const emptyState = document.getElementById('processEmptyState');
-        
-        if (data.length > 0) {
-            tbody.parentElement.style.display = '';
-            emptyState.style.display = 'none';
-
-            tbody.innerHTML = '';
+        try {
+            const data = JSON.parse(dataStr);
+            document.getElementById('statDataCount').textContent = data.length;
+            document.getElementById('statKValue').textContent = kValue;
             
-            // Limit DOM preview rendering to 100 rows
-            const itemsToShow = data.slice(0, 100);
-            itemsToShow.forEach(row => {
-                tbody.innerHTML += `
-                    <tr>
-                        <td>${row.id}</td>
-                        <td>${row.nama}</td>
-                        <td>${row.age}</td>
-                        <td>${row.income}</td>
-                    </tr>
-                `;
-            });
-            
-            if (data.length > 100) {
-                tbody.innerHTML += `
-                    <tr>
-                        <td colspan="4" style="text-align: center; color: var(--text-muted); font-style: italic; font-size: 0.85rem;">
-                            ... Dan ${data.length - 100} data lainnya tidak ditampilkan di pratinjau ini demi performa ...
-                        </td>
-                    </tr>
-                `;
+            if (data.length > 0) {
+                if(tbody) tbody.parentElement.style.display = '';
+                if(emptyState) emptyState.style.display = 'none';
+
+                if(tbody) {
+                    tbody.innerHTML = '';
+                    
+                    // Limit DOM preview rendering to 100 rows
+                    const itemsToShow = data.slice(0, 100);
+                    itemsToShow.forEach(row => {
+                        tbody.innerHTML += `
+                            <tr>
+                                <td>${row.id}</td>
+                                <td>${row.nama}</td>
+                                <td>${row.age}</td>
+                                <td>${row.income}</td>
+                            </tr>
+                        `;
+                    });
+                    
+                    if (data.length > 100) {
+                        tbody.innerHTML += `
+                            <tr>
+                                <td colspan="4" style="text-align: center; color: var(--text-muted); font-style: italic; font-size: 0.85rem;">
+                                    ... Dan ${data.length - 100} data lainnya tidak ditampilkan di pratinjau ini demi performa ...
+                                </td>
+                            </tr>
+                        `;
+                    }
+                }
+            } else {
+                if(tbody) tbody.parentElement.style.display = 'none';
+                if(emptyState) emptyState.style.display = 'block';
             }
-        } else {
-            tbody.parentElement.style.display = 'none';
-            emptyState.style.display = 'block';
+        } catch(e) {
+            console.error("Corrupted session data", e);
+            if(tbody) tbody.parentElement.style.display = 'none';
+            if(emptyState) emptyState.style.display = 'block';
         }
     } else {
-        document.getElementById('processDataBody').parentElement.style.display = 'none';
-        document.getElementById('processEmptyState').style.display = 'block';
+        if(tbody) tbody.parentElement.style.display = 'none';
+        if(emptyState) emptyState.style.display = 'block';
     }
 
     if (resultStr) {
-        const result = JSON.parse(resultStr);
-        document.getElementById('statIterations').textContent = result.converged_at;
-        document.getElementById('statStatus').textContent = '✅ Selesai';
-        document.getElementById('statStatus').style.color = '#10B981';
+        try {
+            const result = JSON.parse(resultStr);
+            document.getElementById('statIterations').textContent = result.converged_at || '-';
+            document.getElementById('statStatus').textContent = '✅ Selesai';
+            document.getElementById('statStatus').style.color = '#10B981';
+        } catch(e) {
+            console.error(e);
+        }
     }
 }
 
