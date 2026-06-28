@@ -148,7 +148,7 @@ function parseCSVText(text) {
 }
 
 function renderTable() {
-    const tbody = document.getElementById('previewTableBody');
+    const tbody = document.getElementById('dataTableBody');
     if (!tbody) return;
     tbody.innerHTML = '';
 
@@ -185,10 +185,12 @@ function renderTable() {
         const tr = document.createElement('tr');
         tr.style.animationDelay = ((i - startIdx) * 0.03) + 's';
         tr.innerHTML = `
-            <td>${escapeHtml(row.id)}</td>
-            <td>${escapeHtml(row.nama)}</td>
+            <td style="color: var(--text-muted)">${i + 1}</td>
+            <td>${escapeHtml(String(row.id))}</td>
+            <td>${escapeHtml(String(row.nama))}</td>
             <td>${row.age}</td>
             <td>${row.income}</td>
+            <td style="text-align: center;"><i data-lucide="check" width="16" height="16" style="color: var(--accent-success)"></i></td>
         `;
         tbody.appendChild(tr);
     }
