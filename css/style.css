@@ -536,6 +536,118 @@ a:hover {
 
 .btn-group { display: flex; gap: 12px; flex-wrap: wrap; }
 
+/* Edu/Concept Cards */
+.edu-content {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 24px;
+    margin-top: 24px;
+}
+
+.concept-card {
+    background: var(--bg-main);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    padding: 24px;
+    transition: all 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    overflow: hidden;
+}
+
+.concept-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; width: 4px; height: 100%;
+    background: var(--accent-primary);
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+
+.concept-card:hover {
+    border-color: var(--border-light);
+    transform: translateY(-2px);
+}
+
+.concept-card:hover::before {
+    opacity: 1;
+}
+
+.concept-card h4 {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 1.1rem;
+    font-family: var(--font-mono);
+    color: var(--text-primary);
+    margin-bottom: 16px;
+    border-bottom: 1px dashed var(--border-color);
+    padding-bottom: 12px;
+}
+
+.concept-card h4 i {
+    color: var(--accent-primary);
+}
+
+.concept-card p {
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+    line-height: 1.6;
+    margin-bottom: 12px;
+}
+
+.concept-card p:last-child {
+    margin-bottom: 0;
+}
+
+.concept-card p strong {
+    color: var(--text-primary);
+    font-weight: 600;
+}
+
+.concept-card p em {
+    color: var(--text-primary);
+    font-style: italic;
+}
+
+.concept-card ol {
+    padding-left: 20px;
+    margin-bottom: 12px;
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+}
+
+.concept-card ol li {
+    margin-bottom: 8px;
+    line-height: 1.6;
+}
+
+.concept-card ol li strong {
+    color: var(--text-primary);
+}
+
+.concept-card code {
+    font-family: var(--font-mono);
+    font-size: 0.85em;
+    background: var(--bg-input);
+    padding: 2px 6px;
+    border-radius: 2px;
+    color: var(--accent-primary);
+}
+
+.formula-box {
+    background: var(--bg-input);
+    border: 1px dashed var(--border-light);
+    padding: 16px;
+    border-radius: var(--radius-sm);
+    font-family: var(--font-mono);
+    color: var(--accent-secondary);
+    text-align: center;
+    margin: 16px 0;
+    font-size: 1rem;
+}
+
 /* Forms */
 .form-group { margin-bottom: 20px; }
 
