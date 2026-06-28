@@ -1,6 +1,4 @@
-# Jangan upload dataset besar ke GitHub (5.6MB)
-ai_student_impact_dataset.csv
-
+# (Dataset diupload ke GitHub untuk deployment Vercel)
 # OS files
 .DS_Store
 Thumbs.db
