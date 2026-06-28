@@ -96,26 +96,33 @@ function renderResults() {
 
     data.forEach((row, i) => {
         const clusterIdx = finalAssignments[i];
-        const labelObj = clusterLabels[clusterIdx];
+        
+        let labelObj;
+        if (clusterIdx === -1) {
+            labelObj = { title: "Noise (Outlier)", desc: "Data di luar klaster DBSCAN" };
+        } else {
+            labelObj = clusterLabels[clusterIdx] || { title: `Cluster ${clusterIdx}`, desc: "Karakteristik klaster ini belum dideskripsikan." };
+        }
 
         exportDataRows.push({
-            id: row.id,
-            nama: row.nama,
-            age: row.age,
-            income: row.income,
-            cluster: CLUSTER_NAMES[clusterIdx],
+            id: row.id || (i+1),
+            nama: row.nama || `Siswa ${i+1}`,
+            valX: row[xLabel] !== undefined ? row[xLabel] : row.age,
+            valY: row[yLabel] !== undefined ? row[yLabel] : row.income,
+            cluster: clusterIdx === -1 ? 'Noise' : clusterIdx,
             label: labelObj.title
         });
 
+        // Limit DOM rendering for performance
         if (i < 100) {
             tbody.innerHTML += `
                 <tr>
-                    <td>${escapeHtml(row.id)}</td>
-                    <td>${escapeHtml(row.nama)}</td>
-                    <td>${row.age}</td>
-                    <td>${row.income}</td>
-                    <td><span class="cluster-badge cluster-badge-${clusterIdx}">● ${CLUSTER_NAMES[clusterIdx]}</span></td>
-                    <td>${labelObj.title}</td>
+                    <td>${row.id || (i+1)}</td>
+                    <td>${row.nama || `Siswa ${i+1}`}</td>
+                    <td>${Number(row[xLabel] !== undefined ? row[xLabel] : row.age).toFixed(2)}</td>
+                    <td>${Number(row[yLabel] !== undefined ? row[yLabel] : row.income).toFixed(2)}</td>
+                    <td><span class="cluster-badge cluster-badge-${clusterIdx}">● ${clusterIdx === -1 ? 'Noise' : CLUSTER_NAMES[clusterIdx]}</span></td>
+                    <td><span style="font-size:0.85rem; padding:4px 8px; border-radius:4px; background:rgba(255,255,255,0.05);">${labelObj.title}</span></td>
                 </tr>
             `;
         }
@@ -378,10 +385,16 @@ function shuffleSample(arr, n) {
 function computeSilhouetteScore(data) {
     const n = data.length;
 
+    const xLabel = sessionStorage.getItem('kmeansXLabel') || 'Weekly_GenAI_Hours';
+    const yLabel = sessionStorage.getItem('kmeansYLabel') || 'Post_Semester_GPA';
+    const featuresStr = sessionStorage.getItem('kmeansFeatures');
+    const features = featuresStr ? JSON.parse(featuresStr) : [xLabel, yLabel];
+
     // Group indices by cluster
     const clusterIndices = {};
     data.forEach((p, i) => {
         const c = p.cluster;
+        if (c === -1) return; // skip noise
         if (!clusterIndices[c]) clusterIndices[c] = [];
         clusterIndices[c].push(i);
     });
@@ -389,23 +402,25 @@ function computeSilhouetteScore(data) {
     const clusterKeys = Object.keys(clusterIndices).map(Number);
 
     // If only 1 cluster, silhouette is undefined — return 0
-    if (clusterKeys.length < 2) return { overall: 0, perCluster: { [clusterKeys[0]]: 0 } };
+    if (clusterKeys.length < 2) return { overall: 0, perCluster: { [clusterKeys[0] !== undefined ? clusterKeys[0] : 0]: 0 } };
 
     // Compute silhouette for each point
     const silhouettePerCluster = {};
     clusterKeys.forEach(c => silhouettePerCluster[c] = []);
 
     let totalS = 0;
+    let validN = 0;
 
     for (let i = 0; i < n; i++) {
         const pi = data[i];
         const ci = pi.cluster;
+        if (ci === -1) continue; // skip noise
 
         // a(i): mean intra-cluster distance
         const sameCluster = clusterIndices[ci].filter(j => j !== i);
         let a = 0;
         if (sameCluster.length > 0) {
-            sameCluster.forEach(j => { a += euclidDist(pi, data[j]); });
+            sameCluster.forEach(j => { a += euclidDist(pi, data[j], features, xLabel, yLabel); });
             a /= sameCluster.length;
         }
 
@@ -414,7 +429,7 @@ function computeSilhouetteScore(data) {
         clusterKeys.forEach(ck => {
             if (ck === ci) return;
             let distSum = 0;
-            clusterIndices[ck].forEach(j => { distSum += euclidDist(pi, data[j]); });
+            clusterIndices[ck].forEach(j => { distSum += euclidDist(pi, data[j], features, xLabel, yLabel); });
             const avgDist = distSum / clusterIndices[ck].length;
             if (avgDist < b) b = avgDist;
         });
@@ -425,6 +440,7 @@ function computeSilhouetteScore(data) {
 
         silhouettePerCluster[ci].push(s);
         totalS += s;
+        validN++;
     }
 
     // Average per cluster
@@ -434,16 +450,11 @@ function computeSilhouetteScore(data) {
         perCluster[c] = arr.length > 0 ? arr.reduce((a, b) => a + b, 0) / arr.length : 0;
     });
 
-    const overall = totalS / n;
+    const overall = validN > 0 ? totalS / validN : 0;
     return { overall, perCluster };
 }
 
-function euclidDist(a, b) {
-    const xLabel = sessionStorage.getItem('kmeansXLabel') || 'Weekly_GenAI_Hours';
-    const yLabel = sessionStorage.getItem('kmeansYLabel') || 'Post_Semester_GPA';
-    const featuresStr = sessionStorage.getItem('kmeansFeatures');
-    const features = featuresStr ? JSON.parse(featuresStr) : [xLabel, yLabel];
-
+function euclidDist(a, b, features, xLabel, yLabel) {
     let sum = 0;
     for (let i = 0; i < features.length; i++) {
         const f = features[i];
