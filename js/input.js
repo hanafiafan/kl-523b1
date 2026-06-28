@@ -49,7 +49,10 @@ async function loadStudentImpactDataset() {
         }
 
         const data = [];
+        const MAX_ROWS = 3000; // Limit for SessionStorage & Performance
         for (let i = 0; i < parsed.rows.length; i++) {
+            if (data.length >= MAX_ROWS) break;
+            
             const row = parsed.rows[i];
             
             const rawX = row[xIdx];
