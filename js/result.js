@@ -911,6 +911,11 @@ function computeDaviesBouldin(data, centroids) {
     const k = centroids.length;
     if (k <= 1) return 0; // Not defined for 1 cluster
 
+    const xLabel = sessionStorage.getItem('kmeansXLabel') || 'Weekly_GenAI_Hours';
+    const yLabel = sessionStorage.getItem('kmeansYLabel') || 'Post_Semester_GPA';
+    const featuresStr = sessionStorage.getItem('kmeansFeatures');
+    const features = featuresStr ? JSON.parse(featuresStr) : [xLabel, yLabel];
+
     // 1. Calculate dispersion (s_i) for each cluster
     const clusterPoints = {};
     for (let i = 0; i < k; i++) clusterPoints[i] = [];
@@ -928,8 +933,19 @@ function computeDaviesBouldin(data, centroids) {
         let sumDist = 0;
         const c = centroids[i];
         for (let p of points) {
-            const dist = Math.sqrt(Math.pow(p.x - c.x, 2) + Math.pow(p.y - c.y, 2));
-            sumDist += dist;
+            let distSq = 0;
+            for (let fIdx = 0; fIdx < features.length; fIdx++) {
+                const fName = features[fIdx];
+                let pVal = parseFloat(p[fName]);
+                if (isNaN(pVal)) {
+                    if (fName === xLabel) pVal = parseFloat(p.age) || 0;
+                    else if (fName === yLabel) pVal = parseFloat(p.income) || 0;
+                    else pVal = 0;
+                }
+                const cVal = parseFloat(c[fIdx]) || 0;
+                distSq += Math.pow(pVal - cVal, 2);
+            }
+            sumDist += Math.sqrt(distSq);
         }
         s[i] = sumDist / points.length;
     }
@@ -943,7 +959,13 @@ function computeDaviesBouldin(data, centroids) {
             
             const c_i = centroids[i];
             const c_j = centroids[j];
-            const d_ij = Math.sqrt(Math.pow(c_i.x - c_j.x, 2) + Math.pow(c_i.y - c_j.y, 2));
+            let distSq = 0;
+            for (let fIdx = 0; fIdx < features.length; fIdx++) {
+                const ciVal = parseFloat(c_i[fIdx]) || 0;
+                const cjVal = parseFloat(c_j[fIdx]) || 0;
+                distSq += Math.pow(ciVal - cjVal, 2);
+            }
+            const d_ij = Math.sqrt(distSq);
             
             if (d_ij === 0) continue; // Prevent division by zero if centroids overlap
             
