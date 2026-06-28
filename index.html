@@ -17,7 +17,10 @@
             <i data-lucide="hexagon" width="24" height="24"></i>
             <span>KL-523B1</span>
         </div>
-        <a href="input.html" class="btn btn-primary btn-sm">Launch Engine</a>
+        <div style="display:flex; gap:12px;">
+            <a href="login.html" class="btn btn-ghost" id="navLoginBtn">Login</a>
+            <a href="input.html" class="btn btn-primary btn-sm" id="navLaunchBtn">Launch Engine</a>
+        </div>
     </header>
 
     <div class="ticker-wrap">
@@ -196,8 +199,30 @@
         </div>
     </section>
 
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/supabase-config.js"></script>
     <script>
         lucide.createIcons();
+        document.addEventListener('DOMContentLoaded', async () => {
+            if (window.isSupabaseConfigured) {
+                const user = await window.getCurrentUser();
+                if (user) {
+                    const loginBtn = document.getElementById('navLoginBtn');
+                    if (loginBtn) {
+                        loginBtn.textContent = 'Logout';
+                        loginBtn.onclick = async (e) => {
+                            e.preventDefault();
+                            await window.signOut();
+                            window.location.reload();
+                        };
+                    }
+                    const launchBtn = document.getElementById('navLaunchBtn');
+                    if (launchBtn) {
+                        launchBtn.textContent = 'Buka Dashboard';
+                    }
+                }
+            }
+        });
     </script>
 </body>
 </html>

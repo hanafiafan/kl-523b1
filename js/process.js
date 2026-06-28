@@ -2,9 +2,30 @@
  * Process.js — Run K-Means in browser via JS port
  */
 
+let currentAlgorithm = 'kmeans';
+
 document.addEventListener('DOMContentLoaded', function() {
     loadProcessData();
 });
+
+function selectAlgorithm(algo) {
+    currentAlgorithm = algo;
+    
+    // Reset buttons
+    document.getElementById('btnAlgoKMeans').className = 'btn ' + (algo === 'kmeans' ? 'btn-primary' : 'btn-secondary');
+    document.getElementById('btnAlgoDBSCAN').className = 'btn ' + (algo === 'dbscan' ? 'btn-primary' : 'btn-secondary');
+    
+    // Toggle params UI
+    document.getElementById('dbscanParams').style.display = algo === 'dbscan' ? 'block' : 'none';
+    
+    // Toggle info text
+    const infoText = document.getElementById('algoInfoText');
+    if (algo === 'kmeans') {
+        infoText.textContent = 'Algoritma K-Means akan dijalankan secara client-side (di browser). Semua langkah perhitungan akan disimpan untuk analisis step-by-step.';
+    } else {
+        infoText.textContent = 'Algoritma DBSCAN (Density-Based Spatial Clustering) akan mencari kelompok berdasarkan kepadatan. Noise akan dimasukkan ke klaster -1.';
+    }
+}
 
 function loadProcessData() {
     const dataStr = sessionStorage.getItem('kmeansData');
@@ -143,7 +164,15 @@ function unscalePoints(dataPoints, params) {
     });
 }
 
-function runKMeans() {
+function runClustering() {
+    if (currentAlgorithm === 'kmeans') {
+        runKMeansEngine();
+    } else if (currentAlgorithm === 'dbscan') {
+        runDBSCANEngine();
+    }
+}
+
+function runKMeansEngine() {
     const dataStr = sessionStorage.getItem('kmeansData');
     if (!dataStr) {
         showToast('Belum ada data. Masukkan data terlebih dahulu!', 'warning');
@@ -384,4 +413,123 @@ function addLog(container, message) {
     line.innerHTML = `<span style="color:var(--text-muted)">[${time}]</span> ${message}`;
     container.appendChild(line);
     container.scrollTop = container.scrollHeight;
+}
+
+// ─── DBSCAN ENGINE ─────────────────────────────────────────────────────────
+
+function runDBSCANEngine() {
+    const dataStr = sessionStorage.getItem('kmeansData');
+    if (!dataStr) {
+        showToast('Belum ada data. Masukkan data terlebih dahulu!', 'warning');
+        return;
+    }
+
+    const dataRaw = JSON.parse(dataStr);
+    const eps = parseFloat(document.getElementById('dbscanEps').value) || 0.5;
+    const minPts = parseInt(document.getElementById('dbscanMinPts').value) || 4;
+
+    const xLabel = sessionStorage.getItem('kmeansXLabel') || 'Weekly_GenAI_Hours';
+    const yLabel = sessionStorage.getItem('kmeansYLabel') || 'Post_Semester_GPA';
+    const features = JSON.parse(sessionStorage.getItem('kmeansFeatures')) || [xLabel, yLabel];
+
+    const dataPoints = dataRaw.map(d => features.map(f => {
+        if (f === xLabel) return parseFloat(d.age);
+        if (f === yLabel) return parseFloat(d.income);
+        if (d[f] !== undefined) return parseFloat(d[f]) || 0;
+        return 0;
+    }));
+
+    const scalingMethod = document.getElementById('scalingMethodSelect').value;
+    const scalingParams = computeScalingParams(dataPoints, scalingMethod, features);
+    sessionStorage.setItem('scalingMethod', scalingMethod);
+    sessionStorage.setItem('scalingParams', JSON.stringify(scalingParams));
+
+    const dataPointsScaled = scalePoints(dataPoints, scalingParams);
+
+    showLoading('Menjalankan algoritma DBSCAN...');
+    const logDiv = document.getElementById('processLog');
+    const logContent = document.getElementById('processLogContent');
+    logDiv.style.display = 'block';
+    logContent.innerHTML = '';
+
+    addLog(logContent, \`[START] DBSCAN Clustering (Client-Side JS)\`);
+    addLog(logContent, \`Data: \${dataPoints.length} records, Eps=\${eps}, MinPts=\${minPts}\`);
+    addLog(logContent, \`Scaling: \${scalingMethod.toUpperCase()}\`);
+
+    setTimeout(() => {
+        try {
+            if (typeof window.dbscanAlgorithm !== 'function') {
+                throw new Error("DBSCAN algorithm script not loaded.");
+            }
+            
+            const result = window.dbscanAlgorithm(dataPointsScaled, eps, minPts);
+
+            addLog(logContent, \`[OK] DBSCAN selesai. Ditemukan \${result.k} cluster (di luar Noise)\`);
+
+            // Compute "fake" centroids for DBSCAN clusters so result.js / visualization.js don't break
+            const k = result.k;
+            const centroidsScaled = [];
+            
+            for (let c = 0; c < k; c++) {
+                const clusterPoints = [];
+                for (let i = 0; i < dataPointsScaled.length; i++) {
+                    if (result.assignments[i] === c) {
+                        clusterPoints.push(dataPointsScaled[i]);
+                    }
+                }
+                
+                if (clusterPoints.length > 0) {
+                    const centroid = [];
+                    for (let j = 0; j < features.length; j++) {
+                        let sum = 0;
+                        for (let p of clusterPoints) sum += p[j];
+                        centroid.push(sum / clusterPoints.length);
+                    }
+                    centroidsScaled.push(centroid);
+                } else {
+                    centroidsScaled.push(new Array(features.length).fill(0));
+                }
+            }
+            
+            const centroidsUnscaled = unscalePoints(centroidsScaled, scalingParams);
+
+            const resultToStore = {
+                k: result.k,
+                converged_at: 'N/A (DBSCAN)',
+                initial_centroids: centroidsUnscaled, // fake
+                final_centroids: centroidsUnscaled,   // fake
+                final_centroids_scaled: centroidsScaled,
+                final_assignments: result.assignments
+            };
+
+            sessionStorage.setItem('kmeansResult', JSON.stringify(resultToStore));
+            sessionStorage.removeItem('kmeansSteps'); // No steps for DBSCAN
+
+            const updatedData = dataRaw.map((row, i) => ({
+                ...row,
+                cluster: result.assignments[i]
+            }));
+            sessionStorage.setItem('kmeansData', JSON.stringify(updatedData));
+            
+            addLog(logContent, \`[INFO] DBSCAN result saved\`);
+
+            document.getElementById('statIterations').textContent = 'N/A';
+            document.getElementById('statStatus').textContent = '✅ Selesai (DBSCAN)';
+            document.getElementById('statStatus').style.color = '#10B981';
+            
+            // Note: DBScan doesn't use K input directly, but update statKValue to show clusters found
+            document.getElementById('statKValue').textContent = result.k;
+
+            hideLoading();
+            setTimeout(() => {
+                showToast('Clustering DBSCAN selesai!', 'success');
+            }, 500);
+
+        } catch (err) {
+            hideLoading();
+            addLog(logContent, \`[ERROR] \${err.message}\`);
+            showToast('Gagal menjalankan DBSCAN. Cek log.', 'error');
+            console.error(err);
+        }
+    }, 100);
 }

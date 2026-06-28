@@ -51,7 +51,7 @@ function renderResults() {
 
     for (let i = 0; i < k; i++) {
         summaryContainer.innerHTML += `
-            <div class="stat-card" style="border-top: 4px solid ${CLUSTER_COLORS[i]}">
+            <div class="stat-card" style="border-top: 4px solid ${getClusterColor(i)}">
                 <div class="flex items-center justify-between mb-2">
                     <span class="cluster-badge cluster-badge-${i}" style="font-size:0.95rem; padding:4px 10px;">${CLUSTER_NAMES[i]}</span>
                     <span style="font-size:1.5rem; font-weight:700; color:var(--text-primary)">${clusterCounts[i]} <span style="font-size:0.9rem; color:var(--text-muted); font-weight:400">data</span></span>
@@ -142,6 +142,11 @@ function renderResults() {
 
     // Trigger Silhouette evaluation automatically after results render
     setTimeout(() => runSilhouette(), 200);
+
+    // Trigger Davies-Bouldin Index evaluation
+    const dbiCard = document.getElementById('dbiCard');
+    if (dbiCard) dbiCard.style.display = 'block';
+    setTimeout(() => runDaviesBouldin(), 400);
 }
 
 function generateClusterLabels(centroids) {
@@ -543,7 +548,7 @@ function drawSilhouetteBarChart(perCluster) {
 
     Object.keys(perCluster).sort((a, b) => parseInt(a) - parseInt(b)).forEach(c => {
         const val   = perCluster[c];
-        const color = CLUSTER_COLORS[c % CLUSTER_COLORS.length];
+        const color = getClusterColor(c);
         labels.push(`Cluster ${c}`);
         dataVals.push(val);
         bgColors.push(color + 'BB');
@@ -845,5 +850,177 @@ function generateRecommendations(centroids, clusterLabels) {
                 </div>
             </div>
         `;
+    });
+}
+
+// ─── DAVIES-BOULDIN INDEX EVALUATION ─────────────────────────────────────────
+
+/**
+ * Main entry point for Davies-Bouldin Index
+ */
+function runDaviesBouldin() {
+    const dataStr = sessionStorage.getItem('kmeansData');
+    const centroidStr = sessionStorage.getItem('kmeansCentroids');
+    if (!dataStr || !centroidStr) return;
+
+    const allData = JSON.parse(dataStr);
+    const centroids = JSON.parse(centroidStr);
+    if (!allData.length || allData[0].cluster === undefined) return;
+
+    const badge = document.getElementById('dbiStatusBadge');
+    if (badge) badge.textContent = 'Menghitung...';
+
+    setTimeout(() => {
+        try {
+            const dbiScore = computeDaviesBouldin(allData, centroids);
+            displayDaviesBouldinResults(dbiScore);
+        } catch (e) {
+            console.error('Davies-Bouldin error:', e);
+            if (badge) badge.textContent = 'Gagal Dihitung';
+        }
+    }, 10);
+}
+
+/**
+ * Compute Davies-Bouldin Index
+ * DBI = (1/K) * sum(max( (s_i + s_j) / d_ij )) for i != j
+ * s_i = average distance of all points in cluster i to centroid i (dispersion)
+ * d_ij = distance between centroid i and centroid j (separation)
+ */
+function computeDaviesBouldin(data, centroids) {
+    const k = centroids.length;
+    if (k <= 1) return 0; // Not defined for 1 cluster
+
+    // 1. Calculate dispersion (s_i) for each cluster
+    const clusterPoints = {};
+    for (let i = 0; i < k; i++) clusterPoints[i] = [];
+    
+    for (let p of data) {
+        if (p.cluster !== undefined && p.cluster >= 0 && p.cluster < k) {
+            clusterPoints[p.cluster].push(p);
+        }
+    }
+
+    const s = new Array(k).fill(0);
+    for (let i = 0; i < k; i++) {
+        const points = clusterPoints[i];
+        if (points.length === 0) continue;
+        let sumDist = 0;
+        const c = centroids[i];
+        for (let p of points) {
+            const dist = Math.sqrt(Math.pow(p.x - c.x, 2) + Math.pow(p.y - c.y, 2));
+            sumDist += dist;
+        }
+        s[i] = sumDist / points.length;
+    }
+
+    // 2. Calculate max R_ij for each cluster i
+    let dbiSum = 0;
+    for (let i = 0; i < k; i++) {
+        let maxR = -Infinity;
+        for (let j = 0; j < k; j++) {
+            if (i === j) continue;
+            
+            const c_i = centroids[i];
+            const c_j = centroids[j];
+            const d_ij = Math.sqrt(Math.pow(c_i.x - c_j.x, 2) + Math.pow(c_i.y - c_j.y, 2));
+            
+            if (d_ij === 0) continue; // Prevent division by zero if centroids overlap
+            
+            const R_ij = (s[i] + s[j]) / d_ij;
+            if (R_ij > maxR) {
+                maxR = R_ij;
+            }
+        }
+        if (maxR !== -Infinity) {
+            dbiSum += maxR;
+        }
+    }
+
+    return dbiSum / k;
+}
+
+function displayDaviesBouldinResults(score) {
+    const scoreEl = document.getElementById('dbiScoreValue');
+    const badge = document.getElementById('dbiStatusBadge');
+    const verdictEl = document.getElementById('dbiVerdict');
+
+    if (scoreEl) {
+        scoreEl.textContent = score.toFixed(4);
+    }
+    
+    if (badge) {
+        badge.textContent = 'Selesai';
+        badge.style.color = '#10b981';
+        badge.style.borderColor = 'rgba(16,185,129,0.3)';
+        badge.style.background = 'rgba(16,185,129,0.07)';
+    }
+
+    if (verdictEl) {
+        verdictEl.style.display = 'block';
+        let quality = '';
+        let color = '';
+        if (score < 0.5) { quality = 'Sangat Baik'; color = '#10b981'; }
+        else if (score < 1.0) { quality = 'Baik'; color = '#3b82f6'; }
+        else if (score < 1.5) { quality = 'Cukup'; color = '#f59e0b'; }
+        else { quality = 'Buruk'; color = '#ef4444'; }
+
+        verdictEl.innerHTML = `
+            Berdasarkan perhitungan Davies-Bouldin Index = <strong>${score.toFixed(4)}</strong>, 
+            kualitas clustering dinilai <strong style="color:${color}">${quality}</strong>. 
+            ${score < 1.0 ? 'Klaster cukup padat dan terpisah dengan baik.' : 'Sebagian klaster mungkin saling tumpang tindih atau kurang padat.'}
+        `;
+    }
+}
+
+// ─── PDF EXPORT ──────────────────────────────────────────────────────────────
+
+function exportToPDF() {
+    const btn = document.getElementById('btnExportPDF');
+    const originalText = btn.innerHTML;
+    btn.innerHTML = '<i data-lucide="loader-2" class="spin" width="14" height="14"></i> Exporting...';
+    btn.disabled = true;
+    lucide.createIcons();
+
+    // Select the main bento-container to export
+    const element = document.querySelector('.bento-container');
+    
+    // Configure html2pdf options
+    const opt = {
+        margin:       [10, 10, 10, 10], // top, left, bottom, right in mm
+        filename:     `KMeans_Report_${new Date().toISOString().split('T')[0]}.pdf`,
+        image:        { type: 'jpeg', quality: 0.98 },
+        html2canvas:  { scale: 2, useCORS: true, backgroundColor: '#0a0a0a' },
+        jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+    };
+
+    // Temporarily adjust some styles for better PDF rendering
+    const originalHeight = element.style.height;
+    element.style.height = 'auto'; // allow expansion
+    const dataTableWrappers = element.querySelectorAll('.data-table-wrapper');
+    const originalMaxHeights = [];
+    dataTableWrappers.forEach((el, i) => {
+        originalMaxHeights[i] = el.style.maxHeight;
+        el.style.maxHeight = 'none';
+        el.style.overflow = 'visible';
+    });
+
+    html2pdf().set(opt).from(element).save().then(() => {
+        // Restore styles
+        element.style.height = originalHeight;
+        dataTableWrappers.forEach((el, i) => {
+            el.style.maxHeight = originalMaxHeights[i];
+            el.style.overflow = 'auto';
+        });
+        
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+        lucide.createIcons();
+    }).catch(err => {
+        console.error("PDF Export Error: ", err);
+        alert("Gagal mengekspor PDF. Periksa console untuk detail.");
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+        lucide.createIcons();
     });
 }

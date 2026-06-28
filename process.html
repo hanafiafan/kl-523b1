@@ -111,9 +111,38 @@
                     <h3><i data-lucide="cpu" width="20" height="20"></i> Jalankan Algoritma</h3>
                 </div>
 
+                <div class="form-group mb-3">
+                    <label class="form-label">Pilih Algoritma Clustering</label>
+                    <div class="btn-group" style="display:flex;">
+                        <button class="btn btn-primary" id="btnAlgoKMeans" onclick="selectAlgorithm('kmeans')" style="flex:1;">
+                            <i data-lucide="layers" width="16" height="16"></i> K-Means
+                        </button>
+                        <button class="btn btn-secondary" id="btnAlgoDBSCAN" onclick="selectAlgorithm('dbscan')" style="flex:1;">
+                            <i data-lucide="network" width="16" height="16"></i> DBSCAN
+                        </button>
+                    </div>
+                </div>
+
                 <div class="alert alert-info mb-2" id="processInfoAlert">
                     <i data-lucide="info" width="18" height="18"></i>
-                    Algoritma K-Means akan dijalankan secara client-side (di browser). Semua langkah perhitungan akan disimpan untuk analisis step-by-step.
+                    <span id="algoInfoText">Algoritma K-Means akan dijalankan secara client-side (di browser). Semua langkah perhitungan akan disimpan untuk analisis step-by-step.</span>
+                </div>
+
+                <!-- DBSCAN Parameters (Hidden by default) -->
+                <div id="dbscanParams" style="display:none; background:rgba(255,255,255,0.02); padding:16px; border:1px solid var(--border-color); border-radius:var(--radius-sm); margin-bottom:20px;">
+                    <h4 style="font-size:0.9rem; color:var(--text-primary); margin-bottom:12px; font-family:var(--font-mono); display:flex; align-items:center; gap:8px;">
+                        <i data-lucide="sliders" width="16" height="16"></i> Parameter DBSCAN
+                    </h4>
+                    <div class="grid-2">
+                        <div class="form-group" style="margin:0;">
+                            <label class="form-label" title="Jarak maksimum antara dua titik untuk dianggap satu neighborhood">Epsilon (ε)</label>
+                            <input type="number" id="dbscanEps" class="form-input" value="0.5" step="0.1">
+                        </div>
+                        <div class="form-group" style="margin:0;">
+                            <label class="form-label" title="Jumlah minimum titik dalam radius Epsilon untuk membentuk core point">MinPts</label>
+                            <input type="number" id="dbscanMinPts" class="form-input" value="4" step="1">
+                        </div>
+                    </div>
                 </div>
 
                 <div class="form-group mb-3">
@@ -132,8 +161,8 @@
                 </div>
 
                 <div class="btn-group">
-                    <button class="btn btn-primary btn-lg" onclick="runKMeans()" id="btnRunKMeans">
-                        <i data-lucide="play" width="18" height="18"></i> Jalankan K-Means
+                    <button class="btn btn-primary btn-lg" onclick="runClustering()" id="btnRunClustering">
+                        <i data-lucide="play" width="18" height="18"></i> Jalankan Algoritma
                     </button>
                     <button class="btn btn-secondary btn-lg" onclick="runElbow()" id="btnRunElbow">
                         <i data-lucide="trending-down" width="18" height="18"></i> Elbow Method
@@ -168,6 +197,8 @@
     <script src="js/main.js"></script>
     <script src="js/supabase-config.js"></script>
     <script src="js/kmeans.js"></script>
+    <script src="js/dbscan.js"></script>
     <script src="js/process.js"></script>
     <script>lucide.createIcons();</script>
 </body>
+</html>

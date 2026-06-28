@@ -119,3 +119,21 @@ const CLUSTER_COLORS_RGBA = [
 ];
 
 const CLUSTER_NAMES = ['C1', 'C2', 'C3', 'C4', 'C5', 'C6', 'C7', 'C8'];
+
+/**
+ * Get cluster color safely, handles Noise (-1)
+ */
+function getClusterColor(index) {
+    if (index === -1) return '#6B7280'; // Gray for Noise
+    return CLUSTER_COLORS[index % CLUSTER_COLORS.length];
+}
+
+function getClusterColorRGBA(index) {
+    if (index === -1) return 'rgba(107,114,128,0.6)';
+    return CLUSTER_COLORS_RGBA[index % CLUSTER_COLORS_RGBA.length];
+}
+
+function getClusterName(index) {
+    if (index === -1) return 'Noise';
+    return CLUSTER_NAMES[index % CLUSTER_NAMES.length];
+}

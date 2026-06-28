@@ -87,8 +87,8 @@ function drawScatter(result, iterIdx) {
         datasets.push({
             label: `Cluster ${c + 1}`,
             data: points,
-            backgroundColor: CLUSTER_COLORS_RGBA[c],
-            borderColor: CLUSTER_COLORS[c],
+            backgroundColor: getClusterColorRGBA(c),
+            borderColor: getClusterColor(c),
             borderWidth: 2,
             pointRadius: dataPoints.length > 5000 ? 2 : (dataPoints.length > 1000 ? 3 : 6), // smaller points for dense datasets
             pointHoverRadius: 8,

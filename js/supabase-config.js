@@ -27,10 +27,16 @@ if (isSupabaseConfigured && window.supabase) {
 async function saveDatasetToCloud(data) {
     if (!supabaseClient) throw new Error("Supabase belum dikonfigurasi.");
     
+    const user = await getCurrentUser();
+    
     const { data: result, error } = await supabaseClient
         .from('datasets')
         .insert([
-            { name: `Dataset ${new Date().toLocaleString()}`, data: data }
+            { 
+                name: `Dataset ${new Date().toLocaleString()}`, 
+                data: data,
+                user_id: user ? user.id : null
+            }
         ])
         .select();
         
@@ -45,10 +51,16 @@ async function saveDatasetToCloud(data) {
 async function getDatasetsFromCloud() {
     if (!supabaseClient) throw new Error("Supabase belum dikonfigurasi.");
     
-    const { data, error } = await supabaseClient
-        .from('datasets')
-        .select('id, name, created_at')
-        .order('created_at', { ascending: false });
+    const user = await getCurrentUser();
+    let query = supabaseClient.from('datasets').select('id, name, created_at');
+    
+    if (user) {
+        query = query.eq('user_id', user.id);
+    } else {
+        query = query.is('user_id', null);
+    }
+    
+    const { data, error } = await query.order('created_at', { ascending: false });
         
     if (error) throw error;
     return data;
@@ -64,10 +76,17 @@ async function getDatasetsFromCloud() {
 async function saveResultToCloud(datasetId, k, kmeansResult) {
     if (!supabaseClient) throw new Error("Supabase belum dikonfigurasi.");
     
+    const user = await getCurrentUser();
+
     const { data, error } = await supabaseClient
         .from('clustering_results')
         .insert([
-            { dataset_id: datasetId, k: k, result: kmeansResult }
+            { 
+                dataset_id: datasetId, 
+                k: k, 
+                result: kmeansResult,
+                user_id: user ? user.id : null
+            }
         ])
         .select();
         
@@ -80,3 +99,44 @@ window.isSupabaseConfigured = isSupabaseConfigured;
 window.saveDatasetToCloud = saveDatasetToCloud;
 window.getDatasetsFromCloud = getDatasetsFromCloud;
 window.saveResultToCloud = saveResultToCloud;
+
+/**
+ * Authentication Functions
+ */
+async function signUp(email, password) {
+    if (!supabaseClient) throw new Error("Supabase belum dikonfigurasi.");
+    const { data, error } = await supabaseClient.auth.signUp({
+        email: email,
+        password: password,
+    });
+    if (error) throw error;
+    return data;
+}
+
+async function signIn(email, password) {
+    if (!supabaseClient) throw new Error("Supabase belum dikonfigurasi.");
+    const { data, error } = await supabaseClient.auth.signInWithPassword({
+        email: email,
+        password: password,
+    });
+    if (error) throw error;
+    return data;
+}
+
+async function signOut() {
+    if (!supabaseClient) return;
+    const { error } = await supabaseClient.auth.signOut();
+    if (error) throw error;
+}
+
+async function getCurrentUser() {
+    if (!supabaseClient) return null;
+    const { data: { user }, error } = await supabaseClient.auth.getUser();
+    if (error) return null;
+    return user;
+}
+
+window.signUp = signUp;
+window.signIn = signIn;
+window.signOut = signOut;
+window.getCurrentUser = getCurrentUser;

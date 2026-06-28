@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login — KL-523B1</title>
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        body {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+        .auth-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 40px;
+            width: 100%;
+            max-width: 420px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+            position: relative;
+            z-index: 10;
+        }
+        .auth-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .auth-header i {
+            color: var(--accent-primary);
+            margin-bottom: 16px;
+        }
+        .auth-header h2 {
+            margin: 0 0 8px 0;
+            font-size: 1.8rem;
+        }
+        .auth-header p {
+            color: var(--text-secondary);
+            margin: 0;
+            font-size: 0.95rem;
+        }
+        .auth-tabs {
+            display: flex;
+            margin-bottom: 24px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .auth-tab {
+            flex: 1;
+            text-align: center;
+            padding: 12px;
+            cursor: pointer;
+            color: var(--text-muted);
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s ease;
+        }
+        .auth-tab.active {
+            color: var(--accent-primary);
+            border-bottom-color: var(--accent-primary);
+            font-weight: 600;
+        }
+        .guest-link {
+            display: block;
+            text-align: center;
+            margin-top: 24px;
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: color 0.2s;
+        }
+        .guest-link:hover {
+            color: var(--text-primary);
+        }
+    </style>
+</head>
+<body>
+    <div class="noise-bg"></div>
+    <div class="grid-bg"></div>
+
+    <div class="auth-card">
+        <div class="auth-header">
+            <i data-lucide="hexagon" width="48" height="48"></i>
+            <h2>Selamat Datang</h2>
+            <p>Sistem K-Means & DBSCAN Clustering</p>
+        </div>
+
+        <div class="auth-tabs">
+            <div class="auth-tab active" id="tabLogin" onclick="switchTab('login')">Login</div>
+            <div class="auth-tab" id="tabRegister" onclick="switchTab('register')">Register</div>
+        </div>
+
+        <form id="authForm" onsubmit="handleAuth(event)">
+            <div class="form-group">
+                <label class="form-label">Email Address</label>
+                <div class="input-with-icon">
+                    <i data-lucide="mail" width="18" height="18"></i>
+                    <input type="email" id="emailInput" class="form-input pl-4" placeholder="name@example.com" required>
+                </div>
+            </div>
+            
+            <div class="form-group mb-4">
+                <label class="form-label">Password</label>
+                <div class="input-with-icon">
+                    <i data-lucide="lock" width="18" height="18"></i>
+                    <input type="password" id="passwordInput" class="form-input pl-4" placeholder="••••••••" required minlength="6">
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary w-full btn-lg" id="btnSubmit">
+                <i data-lucide="log-in" width="18" height="18" id="btnIcon"></i>
+                <span id="btnText">Sign In</span>
+            </button>
+        </form>
+
+        <a href="input.html" class="guest-link">Lanjutkan sebagai Guest <i data-lucide="arrow-right" width="14" height="14" style="vertical-align:middle"></i></a>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="spinner"></div><div class="loading-text" id="loadingText">Authenticating...</div>
+    </div>
+
+    <script src="js/main.js"></script>
+    <script src="js/supabase-config.js"></script>
+    <script src="js/auth.js"></script>
+    <script>
+        lucide.createIcons();
+        
+        // Auto redirect if already logged in
+        document.addEventListener('DOMContentLoaded', async () => {
+            if (window.isSupabaseConfigured) {
+                const user = await window.getCurrentUser();
+                if (user) {
+                    window.location.href = 'input.html';
+                }
+            }
+        });
+    </script>
+</body>
+</html>
