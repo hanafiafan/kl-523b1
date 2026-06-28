@@ -464,9 +464,9 @@ function runDBSCANEngine() {
     logDiv.style.display = 'block';
     logContent.innerHTML = '';
 
-    addLog(logContent, \`[START] DBSCAN Clustering (Client-Side JS)\`);
-    addLog(logContent, \`Data: \${dataPoints.length} records, Eps=\${eps}, MinPts=\${minPts}\`);
-    addLog(logContent, \`Scaling: \${scalingMethod.toUpperCase()}\`);
+    addLog(logContent, `[START] DBSCAN Clustering (Client-Side JS)`);
+    addLog(logContent, `Data: ${dataPoints.length} records, Eps=${eps}, MinPts=${minPts}`);
+    addLog(logContent, `Scaling: ${scalingMethod.toUpperCase()}`);
 
     setTimeout(() => {
         try {
@@ -476,7 +476,7 @@ function runDBSCANEngine() {
             
             const result = window.dbscanAlgorithm(dataPointsScaled, eps, minPts);
 
-            addLog(logContent, \`[OK] DBSCAN selesai. Ditemukan \${result.k} cluster (di luar Noise)\`);
+            addLog(logContent, `[OK] DBSCAN selesai. Ditemukan ${result.k} cluster (di luar Noise)`);
 
             // Compute "fake" centroids for DBSCAN clusters so result.js / visualization.js don't break
             const k = result.k;
@@ -523,7 +523,7 @@ function runDBSCANEngine() {
             }));
             sessionStorage.setItem('kmeansData', JSON.stringify(updatedData));
             
-            addLog(logContent, \`[INFO] DBSCAN result saved\`);
+            addLog(logContent, `[INFO] DBSCAN result saved`);
 
             document.getElementById('statIterations').textContent = 'N/A';
             document.getElementById('statStatus').textContent = '✅ Selesai (DBSCAN)';
@@ -539,7 +539,7 @@ function runDBSCANEngine() {
 
         } catch (err) {
             hideLoading();
-            addLog(logContent, \`[ERROR] \${err.message}\`);
+            addLog(logContent, `[ERROR] ${err.message}`);
             showToast('Gagal menjalankan DBSCAN. Cek log.', 'error');
             console.error(err);
         }
