@@ -768,6 +768,8 @@ function generateRecommendations(centroids, clusterLabels) {
     const container = document.getElementById('recommendationsContainer');
     if (!container) return;
     container.innerHTML = '';
+    
+    window.clusterInterpretations = []; // Initialize global array for PDF Export
 
     // Determine correct indices for X and Y values
     const xLabel = sessionStorage.getItem('kmeansXLabel') || 'Weekly_GenAI_Hours';
@@ -861,6 +863,13 @@ function generateRecommendations(centroids, clusterLabels) {
                 </div>
             </div>
         `;
+
+        // Store globally for PDF Export
+        window.clusterInterpretations.push({
+            title: label ? label.title : `Cluster ${i + 1}`,
+            description: label ? label.desc : "",
+            recommendations: recItems
+        });
     });
 }
 
