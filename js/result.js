@@ -977,50 +977,139 @@ function displayDaviesBouldinResults(score) {
 
 function exportToPDF() {
     const btn = document.getElementById('btnExportPDF');
+    if (!btn) return;
     const originalText = btn.innerHTML;
     btn.innerHTML = '<i data-lucide="loader-2" class="spin" width="14" height="14"></i> Exporting...';
     btn.disabled = true;
     lucide.createIcons();
 
-    // Select the main bento-container to export
-    const element = document.querySelector('.bento-container');
-    
-    // Configure html2pdf options
-    const opt = {
-        margin:       [10, 10, 10, 10], // top, left, bottom, right in mm
-        filename:     `KMeans_Report_${new Date().toISOString().split('T')[0]}.pdf`,
-        image:        { type: 'jpeg', quality: 0.98 },
-        html2canvas:  { scale: 2, useCORS: true, backgroundColor: '#0a0a0a' },
-        jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
-    };
-
-    // Temporarily adjust some styles for better PDF rendering
-    const originalHeight = element.style.height;
-    element.style.height = 'auto'; // allow expansion
-    const dataTableWrappers = element.querySelectorAll('.data-table-wrapper');
-    const originalMaxHeights = [];
-    dataTableWrappers.forEach((el, i) => {
-        originalMaxHeights[i] = el.style.maxHeight;
-        el.style.maxHeight = 'none';
-        el.style.overflow = 'visible';
-    });
-
-    html2pdf().set(opt).from(element).save().then(() => {
-        // Restore styles
-        element.style.height = originalHeight;
-        dataTableWrappers.forEach((el, i) => {
-            el.style.maxHeight = originalMaxHeights[i];
-            el.style.overflow = 'auto';
-        });
+    try {
+        const dataStr = sessionStorage.getItem('kmeansData');
+        const resultStr = sessionStorage.getItem('kmeansResult');
+        const xLabel = sessionStorage.getItem('kmeansXLabel') || 'X';
+        const yLabel = sessionStorage.getItem('kmeansYLabel') || 'Y';
         
-        btn.innerHTML = originalText;
-        btn.disabled = false;
-        lucide.createIcons();
-    }).catch(err => {
+        if (!dataStr || !resultStr) throw new Error("Data tidak lengkap untuk diekspor");
+
+        const data = JSON.parse(dataStr);
+        const result = JSON.parse(resultStr);
+
+        // 1. Set Date
+        const dateStr = new Date().toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+        document.getElementById('pdfDate').textContent = dateStr;
+
+        // 2. Set Executive Summary
+        document.getElementById('pdfTotalData').textContent = data.length;
+        document.getElementById('pdfTotalK').textContent = result.k;
+        const score = sessionStorage.getItem('silhouetteScore');
+        document.getElementById('pdfScore').textContent = score ? parseFloat(score).toFixed(3) : 'Belum Dihitung';
+
+        // 3. Set Centroids Table
+        document.getElementById('pdfCentroidHeaderX').textContent = xLabel;
+        document.getElementById('pdfCentroidHeaderY').textContent = yLabel;
+        const tbody = document.getElementById('pdfCentroidsBody');
+        tbody.innerHTML = '';
+        
+        for (let i = 0; i < result.k; i++) {
+            const centroid = result.final_centroids[i];
+            // Identify label
+            let clusterLabel = "Cluster " + (i+1);
+            if (clusterInterpretations && clusterInterpretations[i]) {
+                clusterLabel = `<strong>${clusterInterpretations[i].title}</strong><br><span style="font-size:11px; color:#6b7280;">${clusterInterpretations[i].description}</span>`;
+            }
+            
+            // X and Y values
+            // Determine X and Y index from headers
+            const headersStr = sessionStorage.getItem('kmeansFeatures');
+            let cx = centroid[0];
+            let cy = centroid[1];
+            if (headersStr) {
+                const headers = JSON.parse(headersStr);
+                const idxX = headers.indexOf(xLabel);
+                const idxY = headers.indexOf(yLabel);
+                if (idxX >= 0) cx = centroid[idxX];
+                if (idxY >= 0) cy = centroid[idxY];
+            }
+
+            tbody.innerHTML += `
+                <tr style="border-bottom: 1px solid #e5e7eb;">
+                    <td style="padding: 10px; color: #111827;"><b>${i+1}</b></td>
+                    <td style="padding: 10px;">${cx.toFixed(2)}</td>
+                    <td style="padding: 10px;">${cy.toFixed(2)}</td>
+                    <td style="padding: 10px;">${clusterLabel}</td>
+                </tr>
+            `;
+        }
+
+        // 4. Capture Charts
+        const chartsContainer = document.getElementById('pdfChartsContainer');
+        chartsContainer.innerHTML = '';
+        
+        const canvas1 = document.getElementById('majorDistChart');
+        if (canvas1) {
+            const img1 = document.createElement('img');
+            img1.src = canvas1.toDataURL('image/png', 1.0);
+            img1.style.width = '45%';
+            img1.style.border = '1px solid #e5e7eb';
+            img1.style.borderRadius = '8px';
+            chartsContainer.appendChild(img1);
+        }
+        const canvas2 = document.getElementById('averageHoursChart');
+        if (canvas2) {
+            const img2 = document.createElement('img');
+            img2.src = canvas2.toDataURL('image/png', 1.0);
+            img2.style.width = '45%';
+            img2.style.border = '1px solid #e5e7eb';
+            img2.style.borderRadius = '8px';
+            chartsContainer.appendChild(img2);
+        }
+
+        // 5. Recommendations
+        const recContainer = document.getElementById('pdfRecommendations');
+        recContainer.innerHTML = '';
+        if (clusterInterpretations) {
+            clusterInterpretations.forEach((rec, idx) => {
+                let recHtml = `<div style="margin-bottom: 16px;">`;
+                recHtml += `<strong style="color:#111827; font-size:14px;">Klaster ${idx+1}: ${rec.title}</strong>`;
+                recHtml += `<ul style="margin: 4px 0 0 0; padding-left: 20px; line-height: 1.6;">`;
+                rec.recommendations.forEach(r => {
+                    recHtml += `<li>${r}</li>`;
+                });
+                recHtml += `</ul></div>`;
+                recContainer.innerHTML += recHtml;
+            });
+        }
+
+        // 6. Generate PDF
+        const element = document.getElementById('pdfTemplate');
+        element.style.display = 'block'; // Make it visible temporarily for html2pdf
+
+        const opt = {
+            margin:       10, // mm
+            filename:     `Laporan_KMeans_${new Date().getTime()}.pdf`,
+            image:        { type: 'jpeg', quality: 1.0 },
+            html2canvas:  { scale: 2, useCORS: true, logging: false },
+            jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        };
+
+        html2pdf().set(opt).from(element).save().then(() => {
+            element.style.display = 'none';
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+            lucide.createIcons();
+        }).catch(err => {
+            console.error(err);
+            element.style.display = 'none';
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+            alert("Gagal memproses PDF.");
+        });
+
+    } catch (err) {
         console.error("PDF Export Error: ", err);
-        alert("Gagal mengekspor PDF. Periksa console untuk detail.");
+        alert("Gagal mengekspor PDF: " + err.message);
         btn.innerHTML = originalText;
         btn.disabled = false;
         lucide.createIcons();
-    });
+    }
 }

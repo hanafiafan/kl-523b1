@@ -267,6 +267,66 @@
         <div class="spinner"></div><div class="loading-text" id="loadingText">Memproses data...</div>
     </div>
     
+    <!-- Hidden PDF Template -->
+    <div id="pdfTemplate" style="display: none; background-color: #ffffff; color: #1f2937; font-family: 'Plus Jakarta Sans', sans-serif; padding: 20mm; width: 210mm; box-sizing: border-box; line-height: 1.5;">
+        <!-- Header -->
+        <div style="border-bottom: 2px solid #3b82f6; padding-bottom: 10px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: flex-end;">
+            <div>
+                <h1 style="color: #111827; font-size: 24px; margin: 0; margin-bottom: 4px; font-weight: 700;">Laporan Analisis Segmentasi Mahasiswa</h1>
+                <p style="color: #6b7280; margin: 0; font-size: 14px;">Algoritma K-Means Clustering (KL-523B1)</p>
+            </div>
+            <div style="text-align: right;">
+                <p style="color: #6b7280; margin: 0; font-size: 12px; font-weight: 600;" id="pdfDate"></p>
+            </div>
+        </div>
+
+        <!-- Eksekutif Summary -->
+        <div style="background-color: #f3f4f6; padding: 16px; border-radius: 8px; margin-bottom: 24px;">
+            <h2 style="color: #111827; font-size: 16px; margin: 0 0 12px 0; border-bottom: 1px solid #e5e7eb; padding-bottom: 8px;">Ringkasan Eksekutif</h2>
+            <div style="display: flex; gap: 24px; font-size: 14px;">
+                <div><span style="color: #6b7280;">Total Data:</span> <strong id="pdfTotalData" style="color: #111827;">-</strong></div>
+                <div><span style="color: #6b7280;">Jumlah Klaster (K):</span> <strong id="pdfTotalK" style="color: #111827;">-</strong></div>
+                <div><span style="color: #6b7280;">Evaluasi Model:</span> <strong id="pdfScore" style="color: #111827;">-</strong></div>
+            </div>
+        </div>
+
+        <!-- Centroids Table -->
+        <div style="margin-bottom: 24px;">
+            <h2 style="color: #111827; font-size: 16px; margin: 0 0 12px 0;">Pusat Klaster (Centroid) & Label</h2>
+            <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
+                <thead>
+                    <tr style="background-color: #f9fafb; border-bottom: 2px solid #e5e7eb;">
+                        <th style="padding: 10px; text-align: left; color: #374151; width: 60px;">Klaster</th>
+                        <th id="pdfCentroidHeaderX" style="padding: 10px; text-align: left; color: #374151;">Variabel X</th>
+                        <th id="pdfCentroidHeaderY" style="padding: 10px; text-align: left; color: #374151;">Variabel Y</th>
+                        <th style="padding: 10px; text-align: left; color: #374151;">Interpretasi Label</th>
+                    </tr>
+                </thead>
+                <tbody id="pdfCentroidsBody">
+                    <!-- Populated by JS -->
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Visualizations -->
+        <div style="margin-bottom: 24px; display: flex; gap: 20px; align-items: flex-start; justify-content: center;" id="pdfChartsContainer">
+            <!-- Populated by JS -->
+        </div>
+
+        <!-- Recommendations -->
+        <div style="margin-bottom: 24px;" class="html2pdf__page-break">
+            <h2 style="color: #111827; font-size: 16px; margin: 0 0 12px 0; border-bottom: 2px solid #e5e7eb; padding-bottom: 8px;">Rekomendasi Strategis (Sistem Pakar)</h2>
+            <div id="pdfRecommendations" style="font-size: 13px; color: #374151;">
+                <!-- Populated by JS -->
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div style="text-align: center; color: #9ca3af; font-size: 10px; border-top: 1px solid #e5e7eb; padding-top: 10px; margin-top: auto;">
+            Di-generate otomatis oleh Engine KL-523B1
+        </div>
+    </div>
+    
     <script src="js/main.js"></script>
     <script src="js/supabase-config.js"></script>
     <script src="js/result.js"></script>
